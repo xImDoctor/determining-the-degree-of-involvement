@@ -173,12 +173,15 @@ class EmotionRecognizer:
 
             return top_emotion, confidence
 
-        except Exception as e:
-            print(f"Ошибка распознавания: {e}")
-            import traceback
-            traceback.print_exc()
+        except (torch.cuda.OutOfMemoryError, MemoryError):
+            # Критично - пробрасываем выше для обработки
+            print('Out of memory in EmotionRecognizer.predict()')
+            raise
 
-        return "Neutral", 0.0
+        except (ValueError, RuntimeError, AttributeError) as e:
+            # Ожидаемые проблемы обработки - логируем и fallback
+            print(f"Предупреждение при распознавании: {e}")
+            return "Neutral", 0.0
 
     def reset(self):
         """Сброс истории"""
