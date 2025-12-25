@@ -228,7 +228,8 @@ def process_video_stream(video_stream: cv2.VideoCapture,
     :param flip_h: Отзеркалить входящий видеопоток
     :return: Генератор, который возвращает обработанный кадр и эмоции. Формат: (image, [(emotion, confidence), ...])
     """
-    if face_detector_and_emotion_recognizer is None:
+    use_inner_models = face_detector_and_emotion_recognizer is None
+    if use_inner_models:
         face_detector = FaceDetector(min_detection_confidence=0.5)
         emotion_recognizer = EmotionRecognizer(
             device='cuda' if torch.cuda.is_available() else 'cpu',
@@ -251,9 +252,10 @@ def process_video_stream(video_stream: cv2.VideoCapture,
             new_img, emotions = face_detector_and_emotion_recognizer.detect_and_recognize(img)
             yield new_img, emotions
     finally:
-        if face_detector_and_emotion_recognizer is None:
+        if use_inner_models:
             face_detector.close()
             emotion_recognizer.reset()
+            del face_detector_and_emotion_recognizer
 
 
 if __name__ == '__main__':
