@@ -3,6 +3,7 @@
 """
 
 import typing
+from time import time
 from collections import deque
 
 import torch
@@ -21,12 +22,18 @@ mp_drawing_styles = mp.solutions.drawing_styles
 class FaceDetector:
     """Детектор лиц MediaPipe Full-Range (для разных дистанций)"""
 
-    def __init__(self, min_detection_confidence=0.5):
+    def __init__(self, *, min_detection_confidence=0.5, margin=20):
+        """
+
+        :param min_detection_confidence: Минимальный уровень уверенности модели, чтобы считать, что лицо есть
+        :param margin: Добавочный отступ к bbox, предсказанный моделью
+        """
         self.detector = mp_face_detection.FaceDetection(
             model_selection=1,  # 1 = full-range model (до 5 метров)
             min_detection_confidence=min_detection_confidence
         )
         self.name = "MediaPipe Full-Range"
+        self.margin = margin
 
     def detect(self, image: cv2.typing.MatLike) -> list[dict[str,
     tuple[int, int, int, int] | cv2.typing.MatLike | float | list[tuple[int, int]]]]:
@@ -44,11 +51,11 @@ class FaceDetector:
                 w_box = int(bbox.width * w)
                 h_box = int(bbox.height * h)
 
-                margin = 20
-                x1 = max(0, x - margin)
-                y1 = max(0, y - margin)
-                x2 = min(w, x + w_box + margin)
-                y2 = min(h, y + h_box + margin)
+                self.margin = 20
+                x1 = max(0, x - self.margin)
+                y1 = max(0, y - self.margin)
+                x2 = min(w, x + w_box + self.margin)
+                y2 = min(h, y + h_box + self.margin)
 
                 face_crop = image[y1:y2, x1:x2]
 
@@ -76,7 +83,7 @@ class FaceDetector:
 class EmotionRecognizer:
     """Распознавание с temporal smoothing + confidence thresholding"""
 
-    def __init__(self, device='cpu', window_size=15, alpha=0.3,
+    def __init__(self, *, device='cpu', window_size=15, alpha=0.3,
                  confidence_threshold=0.55, ambiguity_threshold=0.15,
                  model_name='enet_b2_8_best'):
         """
@@ -262,8 +269,6 @@ def process_video_stream(video_stream: cv2.VideoCapture,
 
 
 if __name__ == '__main__':
-    from time import time
-
     print('Using camera 0')
     cap = cv2.VideoCapture(0)
     fps_history = deque()
