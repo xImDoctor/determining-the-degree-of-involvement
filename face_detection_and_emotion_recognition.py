@@ -51,7 +51,6 @@ class FaceDetector:
                 w_box = int(bbox.width * w)
                 h_box = int(bbox.height * h)
 
-                self.margin = 20
                 x1 = max(0, x - self.margin)
                 y1 = max(0, y - self.margin)
                 x2 = min(w, x + w_box + self.margin)
