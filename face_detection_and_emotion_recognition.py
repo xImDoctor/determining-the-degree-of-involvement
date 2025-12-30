@@ -22,18 +22,43 @@ mp_drawing_styles = mp.solutions.drawing_styles
 class FaceDetector:
     """Детектор лиц MediaPipe Full-Range (для разных дистанций)"""
 
-    def __init__(self, *, min_detection_confidence=0.5, margin=20):
+    def __init__(self, *, min_detection_confidence: float = 0.5, margin: int = 20):
         """
 
         :param min_detection_confidence: Минимальный уровень уверенности модели, чтобы считать, что лицо есть
         :param margin: Добавочный отступ к bbox, предсказанный моделью
         """
+        if type(margin) is not int:
+            raise TypeError(f'Type of "margin" should be int, got {type(margin)}')
+        if margin < 0:
+            raise ValueError(f'"margin" should be >= 0')
+        if type(min_detection_confidence) is not float:
+            raise TypeError(f'Type of "min_detection_confidence" should be float, got {type(min_detection_confidence)}')
+        if min_detection_confidence < 0 or min_detection_confidence > 1:
+            raise ValueError(f'"min_detection_confidence" should be in [0:1]')
+
         self.detector = mp_face_detection.FaceDetection(
             model_selection=1,  # 1 = full-range model (до 5 метров)
             min_detection_confidence=min_detection_confidence
         )
-        self.name = "MediaPipe Full-Range"
         self.margin = margin
+
+    def set_margin(self, margin: int):
+        if type(margin) is not int:
+            raise TypeError(f'Type of "margin" should be int, got {type(margin)}')
+        if margin < 0:
+            raise ValueError(f'"margin" should be >= 0')
+        self.margin = margin
+
+    def set_min_detection_confidence(self, min_detection_confidence: float):
+        if type(min_detection_confidence) is not float:
+            raise TypeError(f'Type of "min_detection_confidence" should be float, got {type(min_detection_confidence)}')
+        if min_detection_confidence < 0 or min_detection_confidence > 1:
+            raise ValueError(f'"min_detection_confidence" should be in [0:1]')
+        self.detector = mp_face_detection.FaceDetection(
+            model_selection=1,  # 1 = full-range model (до 5 метров)
+            min_detection_confidence=min_detection_confidence
+        )
 
     def detect(self, image: cv2.typing.MatLike) -> list[dict[str,
     tuple[int, int, int, int] | cv2.typing.MatLike | float | list[tuple[int, int]]]]:
@@ -228,7 +253,7 @@ class CaptureReadError(Exception): pass
 
 
 def process_video_stream(video_stream: cv2.VideoCapture,
-                         face_detector_and_emotion_recognizer: typing.Optional[DetectFaceAndRecognizeEmotion] = None, *,
+                         face_detector_and_emotion_recognizer: DetectFaceAndRecognizeEmotion | None = None, *,
                          flip_h: bool = False):
     """
     Обрабатывает видеопоток, находя лица и распознавая эмоции
