@@ -3,7 +3,6 @@
 для расчёта метрики вовлечённости
 """
 
-import typing
 import numpy as np
 from collections import deque
 

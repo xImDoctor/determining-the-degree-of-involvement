@@ -4,7 +4,6 @@
 для расчёта метрики вовлечённости
 """
 
-import typing
 import numpy as np
 import cv2
 import math
