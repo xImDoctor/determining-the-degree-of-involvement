@@ -31,10 +31,11 @@ except ImportError as e:
     st.error(f"Не удалось импортировать модуль бэкенда: {e}")
     BACKEND_AVAILABLE = False
 
-APP_TITLE = "🎭 Real-time Emotion Detection"
+APP_TITLE = "Real-time Emotion Detection"
 APP_ICON = "🎭"
 SUPPORTED_FORMATS = ['mp4', 'avi', 'mov', 'mkv', 'webm', 'wmv']
 MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB
+
 
 # ============================================
 # CSS СТИЛИ
@@ -52,31 +53,10 @@ st.markdown("""
     /* Основные стили */
     .main-header {
         font-size: 2.8rem;
-        background: black;
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
         text-align: center;
         margin-bottom: 1rem;
         font-weight: 800;
         padding: 0.5rem;
-    }
-
-    .upload-zone {
-        border: 3px dashed #667eea;
-        border-radius: 20px;
-        padding: 4rem 2rem;
-        text-align: center;
-        background: linear-gradient(135deg, #667eea0d 0%, #764ba20d 100%);
-        margin: 2rem 0;
-        transition: all 0.3s ease;
-        cursor: pointer;
-    }
-
-    .upload-zone:hover {
-        border-color: #FF416C;
-        background: linear-gradient(135deg, #667eea1a 0%, #764ba21a 100%);
-        transform: translateY(-3px);
-        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
     }
 
     .webcam-container {
@@ -112,37 +92,6 @@ st.markdown("""
         padding: 2rem;
         margin: 2rem 0;
         box-shadow: 0 10px 30px rgba(255, 65, 108, 0.3);
-    }
-
-    .stat-card {
-        background: white;
-        border-radius: 12px;
-        padding: 1.5rem;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-        border: 1px solid #e0e0e0;
-        transition: transform 0.3s ease;
-    }
-
-    .stat-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-    }
-
-    .stat-value {
-        font-size: 2.5rem;
-        font-weight: 800;
-        background: linear-gradient(90deg, #667eea, #764ba2);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 0.5rem;
-    }
-
-    .stat-label {
-        font-size: 0.9rem;
-        color: #666;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        font-weight: 600;
     }
 
     .video-container {
@@ -633,8 +582,11 @@ def create_upload_section():
             col1, col2 = st.columns(2)
             with col1:
                 if st.button("🚀 Start Emotion Detection", type="primary", use_container_width=True):
-                    st.session_state.processing_status = "starting"
-                    st.rerun()
+                    if not BACKEND_AVAILABLE:
+                        st.error("Невозможно начать обработку: Backend модуль недоступен. Убедитесь, что файл face_detection_and_emotion_recognition.py находится в текущей директории со всеми необходимыми зависимостями.")
+                    else:
+                        st.session_state.processing_status = "starting"
+                        st.rerun()
             with col2:
                 if st.button("🗑️ Clear File", use_container_width=True):
                     st.session_state.uploaded_file_path = None
@@ -643,36 +595,26 @@ def create_upload_section():
             st.error(f"Error: {video_info['error']}")
 
     else:
-        # Показываем зону загрузки
-        st.markdown('<div class="upload-zone">', unsafe_allow_html=True)
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            st.markdown("""
-            <div style="text-align: center;">
-                <div style="font-size: 4rem;">📁</div>
-                <h3>Drag & Drop Video Here</h3>
-                <p style="color: #666;">or click to browse</p>
-                <p style="font-size: 0.8rem; color: #999; margin-top: 2rem;">
-                Supports MP4, AVI, MOV, MKV, WebM, WMV
-                </p>
-            </div>
-            """, unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+        # Показываем подсказку
+        st.info("Загрузите видеофайл, используя загрузчик выше.")
+        st.markdown("""
+        **Поддерживаемые форматы:** MP4, AVI, MOV, MKV, WebM, WMV
+        **Максимальный размер:** 100MB
+        """)
 
 
 def display_file_info(uploaded_file, video_info):
     """Отображает информацию о файле"""
     st.markdown("### 📊 Video Information")
 
-    # Статистика в карточках
+    # Нативные Streamlit metrics для информации о видеофайле
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        st.markdown('<div class="stat-card">', unsafe_allow_html=True)
-        st.markdown(f'<div class="stat-value">{video_info["width"]}×{video_info["height"]}</div>',
-                    unsafe_allow_html=True)
-        st.markdown('<div class="stat-label">Resolution</div>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.metric(
+            label="Resolution",
+            value=f"{video_info['width']}×{video_info['height']}"
+        )
 
     with col2:
         duration = video_info["duration"]
@@ -683,23 +625,23 @@ def display_file_info(uploaded_file, video_info):
         else:
             duration_str = f"{duration:.1f}s"
 
-        st.markdown('<div class="stat-card">', unsafe_allow_html=True)
-        st.markdown(f'<div class="stat-value">{duration_str}</div>', unsafe_allow_html=True)
-        st.markdown('<div class="stat-label">Duration</div>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.metric(
+            label="Duration",
+            value=duration_str
+        )
 
     with col3:
-        st.markdown('<div class="stat-card">', unsafe_allow_html=True)
-        st.markdown(f'<div class="stat-value">{video_info["fps"]}</div>', unsafe_allow_html=True)
-        st.markdown('<div class="stat-label">FPS</div>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.metric(
+            label="FPS",
+            value=video_info["fps"]
+        )
 
     with col4:
         file_size_mb = uploaded_file.size / (1024 * 1024)
-        st.markdown('<div class="stat-card">', unsafe_allow_html=True)
-        st.markdown(f'<div class="stat-value">{file_size_mb:.1f}</div>', unsafe_allow_html=True)
-        st.markdown('<div class="stat-label">Size (MB)</div>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.metric(
+            label="Size (MB)",
+            value=f"{file_size_mb:.1f}"
+        )
 
 
 def display_video_preview(video_path, video_info):
@@ -958,7 +900,7 @@ def create_webcam_section():
                         img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
                         # Отображаем кадр
-                        webcam_placeholder.image(img_rgb, channels="RGB", use_column_width=True)
+                        webcam_placeholder.image(img_rgb, channels="RGB", use_container_width=True)
 
                         # Отображаем текущие эмоции
                         if emotions:
