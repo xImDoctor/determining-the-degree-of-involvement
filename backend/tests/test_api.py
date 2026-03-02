@@ -56,8 +56,8 @@ async def test_get_rooms_empty():
 
 @pytest.mark.asyncio
 async def test_get_rooms_with_data():
-    from app.main import app
     from app.db.rooms_and_clients import Room
+    from app.main import app
     from app.services.room import RoomService
 
     mock_service = MagicMock(spec=RoomService)
@@ -80,8 +80,8 @@ async def test_get_rooms_with_data():
 
 @pytest.mark.asyncio
 async def test_get_clients_in_room_success():
-    from app.main import app
     from app.db.rooms_and_clients import Client as RoomClient
+    from app.main import app
     from app.services.room import RoomService
 
     mock_service = MagicMock(spec=RoomService)

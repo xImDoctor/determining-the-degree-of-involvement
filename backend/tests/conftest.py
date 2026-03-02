@@ -1,5 +1,4 @@
 from uuid import uuid4
-from unittest.mock import MagicMock
 
 import pytest
 
@@ -26,21 +25,26 @@ class MockRedis:
             return len(values)
         return 0
 
+    @staticmethod
+    def _encode_key(key):
+        return key.encode() if isinstance(key, str) else key
+
+    @staticmethod
+    def _encode_value(value):
+        return value.encode() if isinstance(value, str) else value
+
     def hset(self, key, field=None, value=None, mapping=None):
         if key not in self._data:
             self._data[key] = {}
-        # Handle hset(key, field, value)
         if field is not None and value is not None:
-            self._data[key][field.encode() if isinstance(field, str) else field] = value.encode() if isinstance(value, str) else value
-        # Handle hset(key, mapping={...})
+            self._data[key][self._encode_key(field)] = self._encode_value(value)
         if mapping:
-            self._data[key].update({k.encode() if isinstance(k, str) else k: v.encode() if isinstance(v, str) else v for k, v in mapping.items()})
+            self._data[key].update({self._encode_key(k): self._encode_value(v) for k, v in mapping.items()})
         return 1
 
     def hgetall(self, key):
-        # Return bytes keys to match real Redis
         raw = self._data.get(key, {})
-        return {k.encode() if isinstance(k, str) else k: v.encode() if isinstance(v, str) else v for k, v in raw.items()}
+        return {self._encode_key(k): self._encode_value(v) for k, v in raw.items()}
 
     def hget(self, key, field):
         return self._data.get(key, {}).get(field)

@@ -1,6 +1,7 @@
 """
 Модуль WebSocket эндпоинтов для видеопотока и стриминга.
 """
+
 import asyncio
 import base64
 import logging
@@ -50,9 +51,11 @@ async def stream(
         WebSocketDisconnect: При закрытии соединения клиентом
     """
     await websocket.accept()
-    client: Client = Client(id_=uuid4(), name=name)
+    client_id = uuid4()
+    client_name = name if name else f"client_{client_id.hex[:8]}"
+    client: Client = Client(id_=client_id, name=client_name)
     await room_service.add_client(room_id, client)
-    logger.info(f"Client {client.id_} connected to room {room_id} (name: {name})")
+    logger.info(f"Client {client.id_} connected to room {room_id} (name: {client_name})")
     try:
         while True:
             data = await websocket.receive_json()
@@ -82,7 +85,6 @@ async def stream(
     finally:
         await room_service.remove_client(room_id, client)
         await analyzer_service.remove(client.id_)
-
 
 
 @stream_router.websocket("/ws/rooms/{room_id}/clients/{client_id}/output_stream")

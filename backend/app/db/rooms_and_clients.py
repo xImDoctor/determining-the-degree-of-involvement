@@ -52,6 +52,7 @@ class Room:
     id_: str
     clients: dict[UUID, Client]
 
+
 @dataclass
 class ClientFrame:
     src: cv2.typing.MatLike
@@ -68,13 +69,12 @@ class ClientAndRoomStorage:
             password=settings.redis_password if settings.redis_password else None,
             socket_timeout=settings.redis_timeout,
         )
-        self.pubsubs: dict[str, redis.client.PubSub] = {} # client id : pubsub
+        self.pubsubs: dict[str, redis.client.PubSub] = {}  # client id : pubsub
         # rooms -> {roomId, ...}
         # room:roomId -> {clientId, ...}
         # client:clientId {name:, source_closed:}
         # PubSup
         # client_stream:clientId -> {metrics:JSON, src_frame:base64, prc_frame:base64}
-
 
     async def get_rooms(self) -> list[Room]:
         """
@@ -84,22 +84,19 @@ class ClientAndRoomStorage:
             list[Room]: Список объектов Room
         """
         rooms: list[Room] = []
-        for room_id in self.redis.smembers('rooms'):
+        for room_id in self.redis.smembers("rooms"):
             room_id_str = room_id.decode() if isinstance(room_id, bytes) else room_id
-            client_ids = self.redis.smembers(f'room:{room_id_str}')
+            client_ids = self.redis.smembers(f"room:{room_id_str}")
             clients: dict[UUID, Client] = {}
             for client_id in client_ids:
                 client_id_str = client_id.decode() if isinstance(client_id, bytes) else client_id
                 client_uuid = UUID(client_id_str)
-                client_data: dict[bytes, bytes] = self.redis.hgetall(f'client:{client_id_str}')
+                client_data: dict[bytes, bytes] = self.redis.hgetall(f"client:{client_id_str}")
                 clients[client_uuid] = Client(
-                    client_uuid,
-                    client_data[b'name'].decode(),
-                    client_data[b'source_closed'].decode() == 'True'
+                    client_uuid, client_data[b"name"].decode(), client_data[b"source_closed"].decode() == "True"
                 )
             rooms.append(Room(room_id_str, clients))
         return rooms
-
 
     async def add_client(self, room_id: str, client: Client) -> None:
         """
@@ -111,16 +108,16 @@ class ClientAndRoomStorage:
             room_id: ID комнаты
             client: Объект клиента для добавления
         """
-        room_members = self.redis.smembers('rooms')
+        room_members = self.redis.smembers("rooms")
         room_id_bytes = room_id.encode() if isinstance(room_id, str) else room_id
         if room_id_bytes not in room_members:
-            self.redis.sadd('rooms', room_id)
-        self.redis.sadd(f'room:{room_id}', str(client.id_))
-        self.redis.hset(f'client:{client.id_}',
-                            mapping={'name': client.name, 'source_closed': str(client.source_closed)})
+            self.redis.sadd("rooms", room_id)
+        self.redis.sadd(f"room:{room_id}", str(client.id_))
+        self.redis.hset(
+            f"client:{client.id_}", mapping={"name": client.name, "source_closed": str(client.source_closed)}
+        )
         self.pubsubs[str(client.id_)] = self.redis.pubsub()
-        self.pubsubs[str(client.id_)].subscribe(f'client_stream:{client.id_}')
-
+        self.pubsubs[str(client.id_)].subscribe(f"client_stream:{client.id_}")
 
     async def get_client(self, room_id: str, client_id: UUID) -> Client:
         """
@@ -137,18 +134,18 @@ class ClientAndRoomStorage:
             RoomNotFoundError: Если комната не найдена
             ClientNotFoundError: Если клиент не найден в комнате
         """
-        room_members = self.redis.smembers('rooms')
+        room_members = self.redis.smembers("rooms")
         room_id_bytes = room_id.encode() if isinstance(room_id, str) else room_id
         if room_id_bytes not in room_members:
             raise RoomNotFoundError
         client_id_str = str(client_id)
-        room_key = f'room:{room_id}'
+        room_key = f"room:{room_id}"
         room_client_members = self.redis.smembers(room_key)
         client_id_bytes = client_id_str.encode() if isinstance(client_id_str, str) else client_id_str
         if client_id_bytes not in room_client_members:
             raise ClientNotFoundError
-        client_data: dict[bytes, bytes] = self.redis.hgetall(f'client:{client_id_str}')
-        return Client(client_id, client_data[b'name'].decode(), client_data[b'source_closed'].decode() == 'True')
+        client_data: dict[bytes, bytes] = self.redis.hgetall(f"client:{client_id_str}")
+        return Client(client_id, client_data[b"name"].decode(), client_data[b"source_closed"].decode() == "True")
 
     async def remove_client(self, room_id: str, client: Client) -> None:
         """
@@ -160,25 +157,24 @@ class ClientAndRoomStorage:
             room_id: ID комнаты
             client: Объект клиента для удаления
         """
-        room_members = self.redis.smembers('rooms')
+        room_members = self.redis.smembers("rooms")
         room_id_bytes = room_id.encode() if isinstance(room_id, str) else room_id
         if room_id_bytes not in room_members:
             return
         client_id_str = str(client.id_)
-        room_client_members = self.redis.smembers(f'room:{room_id}')
+        room_client_members = self.redis.smembers(f"room:{room_id}")
         client_id_bytes = client_id_str.encode() if isinstance(client_id_str, str) else client_id_str
         if client_id_bytes not in room_client_members:
             return
-        self.redis.delete(f'client:{client_id_str}')
-        self.redis.srem(f'room:{room_id}', client_id_str)
+        self.redis.delete(f"client:{client_id_str}")
+        self.redis.srem(f"room:{room_id}", client_id_str)
         if client_id_str in self.pubsubs:
             del self.pubsubs[client_id_str]
         # Delete room if no more clients
-        remaining_clients = self.redis.smembers(f'room:{room_id}')
+        remaining_clients = self.redis.smembers(f"room:{room_id}")
         if not remaining_clients:
-            self.redis.srem('rooms', room_id)
-            self.redis.delete(f'room:{room_id}')
-
+            self.redis.srem("rooms", room_id)
+            self.redis.delete(f"room:{room_id}")
 
     async def get_clients_in_room(self, room_id: str) -> list[Client]:
         """
@@ -193,52 +189,58 @@ class ClientAndRoomStorage:
         Raises:
             RoomNotFoundError: Если комната не найдена
         """
-        room_members = self.redis.smembers('rooms')
+        room_members = self.redis.smembers("rooms")
         room_id_bytes = room_id.encode() if isinstance(room_id, str) else room_id
         if room_id_bytes not in room_members:
             raise RoomNotFoundError
-        client_ids = self.redis.smembers(f'room:{room_id}')
+        client_ids = self.redis.smembers(f"room:{room_id}")
         clients: list[Client] = []
         for client_id in client_ids:
             client_id_str = client_id.decode() if isinstance(client_id, bytes) else client_id
-            client_data: dict[bytes, bytes] = self.redis.hgetall(f'client:{client_id_str}')
-            clients.append(Client(UUID(client_id_str), client_data[b'name'].decode(),
-                                  client_data[b'source_closed'].decode() == 'True'))
+            client_data: dict[bytes, bytes] = self.redis.hgetall(f"client:{client_id_str}")
+            clients.append(
+                Client(
+                    UUID(client_id_str), client_data[b"name"].decode(), client_data[b"source_closed"].decode() == "True"
+                )
+            )
         return clients
 
     async def close_client(self, client: Client):
-        self.redis.hset(f'client:{client.id_}', 'source_closed', 'True')
+        self.redis.hset(f"client:{client.id_}", "source_closed", "True")
 
     async def client_is_close(self, client: Client):
-        res = self.redis.hgetall(f'client:{client.id_}')
+        res = self.redis.hgetall(f"client:{client.id_}")
         if res is None:
             return True
-        return res[b'source_closed'] == b'True'
+        return res[b"source_closed"] == b"True"
 
     async def send_frame(self, client: Client, frame: ClientFrame):
         json = {
-            'src': await self._img_to_base64(frame.src),
-            'prc': await self._img_to_base64(frame.prc),
-            'result': list(map(asdict, frame.results))
+            "src": await self._img_to_base64(frame.src),
+            "prc": await self._img_to_base64(frame.prc),
+            "result": list(map(asdict, frame.results)),
         }
-        self.redis.publish(f'client_stream:{client.id_}', JSONEncoder().encode(json))
+        self.redis.publish(f"client_stream:{client.id_}", JSONEncoder().encode(json))
 
     async def get_frame(self, client: Client, timeout: float = 0.0) -> ClientFrame | None:
         if str(client.id_) not in self.pubsubs:
             self.pubsubs[str(client.id_)] = self.redis.pubsub()
-            self.pubsubs[str(client.id_)].subscribe(f'client_stream:{client.id_}')
+            self.pubsubs[str(client.id_)].subscribe(f"client_stream:{client.id_}")
         pubsub = self.pubsubs[str(client.id_)]
         message = pubsub.get_message(ignore_subscribe_messages=True, timeout=timeout)
-        if not message or message['type'] != 'message':
+        if not message or message["type"] != "message":
             return None
-        json = JSONDecoder().decode(message['data'].decode())
-        for item in json['result']:
-            item['bbox'] = tuple(item['bbox'])
-            if item['head_pose']:
-                item['head_pose']['rotation_vec'] = tuple(item['head_pose']['rotation_vec'])
-                item['head_pose']['translation_vec'] = tuple(item['head_pose']['translation_vec'])
-        return ClientFrame(await self._base64_to_img(json['src']), await self._base64_to_img(json['prc']),
-                           [from_dict(OneFaceMetricsAnalyzeResult, item) for item in json['result']])
+        json = JSONDecoder().decode(message["data"].decode())
+        for item in json["result"]:
+            item["bbox"] = tuple(item["bbox"])
+            if item["head_pose"]:
+                item["head_pose"]["rotation_vec"] = tuple(item["head_pose"]["rotation_vec"])
+                item["head_pose"]["translation_vec"] = tuple(item["head_pose"]["translation_vec"])
+        return ClientFrame(
+            await self._base64_to_img(json["src"]),
+            await self._base64_to_img(json["prc"]),
+            [from_dict(OneFaceMetricsAnalyzeResult, item) for item in json["result"]],
+        )
 
     @staticmethod
     async def _img_to_base64(img: cv2.typing.MatLike) -> str:
@@ -249,4 +251,8 @@ class ClientAndRoomStorage:
     async def _base64_to_img(image_b64: str) -> cv2.typing.MatLike:
         image_bytes = base64.b64decode(image_b64)
         nparr = np.frombuffer(image_bytes, np.uint8)
-        return cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        if img is None:
+            msg = "Failed to decode image"
+            raise ValueError(msg)
+        return img

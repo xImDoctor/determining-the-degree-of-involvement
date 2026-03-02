@@ -29,7 +29,7 @@ class RoomService:
         Returns:
             list[Room]: Список объектов Room
         """
-        return await self.storage.get_rooms()
+        return await self.storage.get_rooms()  # type: ignore[no-any-return]
 
     async def add_client(self, room_id: str, client: Client) -> None:
         """
@@ -58,7 +58,7 @@ class RoomService:
             RoomNotFoundError: Если комната не найдена
             ClientNotFoundError: Если клиент не найден в комнате
         """
-        return await self.storage.get_client(room_id, client_id)
+        return await self.storage.get_client(room_id, client_id)  # type: ignore[no-any-return]
 
     async def remove_client(self, room_id: str, client: Client) -> None:
         """
@@ -86,16 +86,16 @@ class RoomService:
         Raises:
             RoomNotFoundError: Если комната не найдена
         """
-        return await self.storage.get_clients_in_room(room_id)
+        return await self.storage.get_clients_in_room(room_id)  # type: ignore[no-any-return]
 
-    async def close_client(self, client: Client):
+    async def close_client(self, client: Client) -> None:
         await self.storage.close_client(client)
 
-    async def client_is_close(self, client: Client):
-        return await self.storage.client_is_close(client)
+    async def client_is_close(self, client: Client) -> bool:
+        return await self.storage.client_is_close(client)  # type: ignore[no-any-return]
 
-    async def send_frame(self, client: Client, frame: ClientFrame):
+    async def send_frame(self, client: Client, frame: ClientFrame) -> None:
         await self.storage.send_frame(client, frame)
 
     async def get_frame(self, client: Client, timeout: float = 0.0) -> ClientFrame | None:
-        return await self.storage.get_frame(client, timeout)
+        return await self.storage.get_frame(client, timeout)  # type: ignore[no-any-return]
