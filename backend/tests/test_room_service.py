@@ -2,11 +2,8 @@ from uuid import uuid4
 
 import pytest
 
-from app.services.room import (
-    Client,
-    ClientNotFoundError,
-    RoomNotFoundError,
-)
+from app.db.rooms_and_clients import Client, ClientNotFoundError, RoomNotFoundError
+from app.services.room import RoomService
 
 
 class TestRoomService:

@@ -85,14 +85,19 @@ class ClientAndRoomStorage:
         """
         rooms: list[Room] = []
         for room_id in self.redis.smembers('rooms'):
-            room_id: str
-            client_ids: list[str] = self.redis.smembers(f'room:{room_id}')
+            room_id_str = room_id.decode() if isinstance(room_id, bytes) else room_id
+            client_ids = self.redis.smembers(f'room:{room_id_str}')
             clients: dict[UUID, Client] = {}
             for client_id in client_ids:
-                client_uuid = UUID(client_id)
-                client_data: dict[str, str] = self.redis.hgetall(f'client:{client_id}')
-                clients[client_uuid] = Client(client_uuid, client_data['name'], client_data['source_closed'] == 'True')
-            rooms.append(Room(room_id, clients))
+                client_id_str = client_id.decode() if isinstance(client_id, bytes) else client_id
+                client_uuid = UUID(client_id_str)
+                client_data: dict[bytes, bytes] = self.redis.hgetall(f'client:{client_id_str}')
+                clients[client_uuid] = Client(
+                    client_uuid,
+                    client_data[b'name'].decode(),
+                    client_data[b'source_closed'].decode() == 'True'
+                )
+            rooms.append(Room(room_id_str, clients))
         return rooms
 
 
@@ -106,7 +111,9 @@ class ClientAndRoomStorage:
             room_id: ID комнаты
             client: Объект клиента для добавления
         """
-        if room_id not in self.redis.smembers('rooms'):
+        room_members = self.redis.smembers('rooms')
+        room_id_bytes = room_id.encode() if isinstance(room_id, str) else room_id
+        if room_id_bytes not in room_members:
             self.redis.sadd('rooms', room_id)
         self.redis.sadd(f'room:{room_id}', str(client.id_))
         self.redis.hset(f'client:{client.id_}',
@@ -130,11 +137,17 @@ class ClientAndRoomStorage:
             RoomNotFoundError: Если комната не найдена
             ClientNotFoundError: Если клиент не найден в комнате
         """
-        if room_id.encode() not in self.redis.smembers('rooms'):
+        room_members = self.redis.smembers('rooms')
+        room_id_bytes = room_id.encode() if isinstance(room_id, str) else room_id
+        if room_id_bytes not in room_members:
             raise RoomNotFoundError
-        if str(client_id).encode() not in self.redis.smembers(f'room:{room_id}'):
+        client_id_str = str(client_id)
+        room_key = f'room:{room_id}'
+        room_client_members = self.redis.smembers(room_key)
+        client_id_bytes = client_id_str.encode() if isinstance(client_id_str, str) else client_id_str
+        if client_id_bytes not in room_client_members:
             raise ClientNotFoundError
-        client_data: dict[bytes, bytes] = self.redis.hgetall(f'client:{client_id}')
+        client_data: dict[bytes, bytes] = self.redis.hgetall(f'client:{client_id_str}')
         return Client(client_id, client_data[b'name'].decode(), client_data[b'source_closed'].decode() == 'True')
 
     async def remove_client(self, room_id: str, client: Client) -> None:
@@ -147,14 +160,24 @@ class ClientAndRoomStorage:
             room_id: ID комнаты
             client: Объект клиента для удаления
         """
-        if room_id not in self.redis.smembers('rooms'):
+        room_members = self.redis.smembers('rooms')
+        room_id_bytes = room_id.encode() if isinstance(room_id, str) else room_id
+        if room_id_bytes not in room_members:
             return
-        if str(client.id_) not in self.redis.get(f'room:{room_id}'):
+        client_id_str = str(client.id_)
+        room_client_members = self.redis.smembers(f'room:{room_id}')
+        client_id_bytes = client_id_str.encode() if isinstance(client_id_str, str) else client_id_str
+        if client_id_bytes not in room_client_members:
             return
-        self.redis.delete(f'client:{client.id_}')
-        self.redis.srem(f'room:{room_id}', str(client.id_))
-        if str(client.id_) in self.pubsubs:
-            del self.pubsubs[str(client.id_)]
+        self.redis.delete(f'client:{client_id_str}')
+        self.redis.srem(f'room:{room_id}', client_id_str)
+        if client_id_str in self.pubsubs:
+            del self.pubsubs[client_id_str]
+        # Delete room if no more clients
+        remaining_clients = self.redis.smembers(f'room:{room_id}')
+        if not remaining_clients:
+            self.redis.srem('rooms', room_id)
+            self.redis.delete(f'room:{room_id}')
 
 
     async def get_clients_in_room(self, room_id: str) -> list[Client]:
@@ -170,12 +193,16 @@ class ClientAndRoomStorage:
         Raises:
             RoomNotFoundError: Если комната не найдена
         """
+        room_members = self.redis.smembers('rooms')
+        room_id_bytes = room_id.encode() if isinstance(room_id, str) else room_id
+        if room_id_bytes not in room_members:
+            raise RoomNotFoundError
         client_ids = self.redis.smembers(f'room:{room_id}')
         clients: list[Client] = []
         for client_id in client_ids:
-            client_id: bytes
-            client_data: dict[bytes, bytes] = self.redis.hgetall(f'client:{client_id.decode()}')
-            clients.append(Client(UUID(client_id.decode()), client_data[b'name'].decode(),
+            client_id_str = client_id.decode() if isinstance(client_id, bytes) else client_id
+            client_data: dict[bytes, bytes] = self.redis.hgetall(f'client:{client_id_str}')
+            clients.append(Client(UUID(client_id_str), client_data[b'name'].decode(),
                                   client_data[b'source_closed'].decode() == 'True'))
         return clients
 
