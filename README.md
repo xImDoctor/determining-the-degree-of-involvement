@@ -33,14 +33,20 @@ cd backend && pip install -e ".[dev]"
 cd ../frontend && pip install -r requirements.txt
 ```
 
-#### 2. Run Backend
+#### 2. Run Redis Server (required for backend)
+
+```bash
+redis-server
+```
+
+#### 3. Run Backend
 
 ```bash
 cd backend
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-#### 3. Run Frontend
+#### 4. Run Frontend
 
 ```bash
 cd frontend
@@ -58,6 +64,7 @@ streamlit run emotion_detection_app.py
 | Video Processing    | OpenCV                |
 | Backend             | FastAPI + WebSocket   |
 | Frontend            | Streamlit             |
+| Caching/Temp Storage | Redis                |
 
 ---
 
@@ -65,17 +72,26 @@ streamlit run emotion_detection_app.py
 
 ```
 .
-├── backend/              # FastAPI backend
-│   ├── app/             # Application code
-│   │   ├── api/         # API routes
-│   │   ├── core/        # Configuration
-│   │   ├── schemas/     # Pydantic models
-│   │   └── services/    # Business logic
-│   └── tests/           # Tests
-├── frontend/            # Streamlit frontend
+├── .env                     # Environment variables (gitignored)
+├── .env.example             # Environment template
+├── docker-compose.yaml      # Docker orchestration
+├── backend/                 # FastAPI backend
+│   ├── app/                # Application code
+│   │   ├── api/           # API routes
+│   │   ├── core/          # Configuration
+│   │   ├── db/            # Database
+│   │   ├── schemas/       # Pydantic models
+│   │   └── services/      # Business logic
+│   ├── tests/             # Backend tests
+│   ├── scripts/           # Utility scripts
+│   ├── pyproject.toml
+│   └── Dockerfile
+├── frontend/               # Streamlit frontend
 │   ├── emotion_detection_app.py
 │   └── styles.css
-└── docker-compose.yaml  # Docker orchestration
+└── tests/                  # Manual tests
+    ├── html/              # WebSocket test page
+    └── manual/            # Manual test scripts
 ```
 
 ---
