@@ -8,6 +8,7 @@ import numpy as np
 import redis
 from dacite import from_dict
 
+from app.core.config import settings
 from app.services.video_processing import OneFaceMetricsAnalyzeResult
 
 
@@ -60,7 +61,13 @@ class ClientFrame:
 
 class ClientAndRoomStorage:
     def __init__(self):
-        self.redis = redis.Redis() # TODO from config
+        self.redis = redis.Redis(
+            host=settings.redis_host,
+            port=settings.redis_port,
+            db=settings.redis_db,
+            password=settings.redis_password if settings.redis_password else None,
+            socket_timeout=settings.redis_timeout,
+        )
         self.pubsubs: dict[str, redis.client.PubSub] = {} # client id : pubsub
         # rooms -> {roomId, ...}
         # room:roomId -> {clientId, ...}
