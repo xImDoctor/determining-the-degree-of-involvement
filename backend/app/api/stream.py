@@ -1,7 +1,6 @@
 """
 Модуль WebSocket эндпоинтов для видеопотока и стриминга.
 """
-
 import asyncio
 import base64
 import logging
@@ -14,13 +13,8 @@ import numpy as np
 from cv2 import error
 from fastapi import APIRouter, Depends, Path, Query, WebSocket, WebSocketDisconnect, status
 
-from app.services.room import (
-    Client,
-    ClientNotFoundError,
-    RoomNotFoundError,
-    RoomService,
-    get_room_service,
-)
+from app.db.rooms_and_clients import Client, ClientFrame, ClientNotFoundError, RoomNotFoundError
+from app.services.room import RoomService
 from app.services.video_processing import FaceAnalysisPipelineService, get_face_analysis_pipeline_service
 
 logger = logging.getLogger(__name__)
@@ -31,7 +25,7 @@ stream_router = APIRouter()
 @stream_router.websocket("/ws/rooms/{room_id}/stream")
 async def stream(
     websocket: WebSocket,
-    room_service: Annotated[RoomService, Depends(get_room_service)],
+    room_service: Annotated[RoomService, Depends()],
     analyzer_service: Annotated[FaceAnalysisPipelineService, Depends(get_face_analysis_pipeline_service)],
     room_id: Annotated[str, Path(max_length=40)],
     name: Annotated[str | None, Query(max_length=30)] = None,
@@ -78,14 +72,7 @@ async def stream(
             new_img = analyze_res.image
             results = analyze_res.metrics
 
-            queue = client.get_frame_queue()
-            frame_data = {"src": img, "prc": new_img, "results": results}
-            if queue.full():
-                try:
-                    queue.get_nowait()
-                except asyncio.QueueEmpty:
-                    pass
-            queue.put_nowait(frame_data)
+            await room_service.send_frame(client, ClientFrame(img, new_img, results))
             _, buffer = cv2.imencode(".jpg", new_img)
             img_base64 = base64.b64encode(buffer).decode("utf-8")
             results_serializable = list(map(asdict, results))
@@ -95,7 +82,7 @@ async def stream(
     finally:
         await room_service.remove_client(room_id, client)
         await analyzer_service.remove(client.id_)
-        client.get_source_closed().set()
+
 
 
 @stream_router.websocket("/ws/rooms/{room_id}/clients/{client_id}/output_stream")
@@ -103,7 +90,7 @@ async def client_stream(
     websocket: WebSocket,
     room_id: Annotated[str, Path(max_length=40)],
     client_id: UUID,
-    room_service: Annotated[RoomService, Depends(get_room_service)],
+    room_service: Annotated[RoomService, Depends()],
 ):
     """
     WebSocket эндпоинт для получения обработанного видеопотока конкретного клиента.
@@ -121,7 +108,6 @@ async def client_stream(
 
     Raises:
         WebSocketDisconnect: При закрытии соединения клиентом
-        HTTPException 404: Если комната или клиент не найдены
     """
     await websocket.accept()
     logger.info(f"Output stream requested for client {client_id} in room {room_id}")
@@ -134,16 +120,15 @@ async def client_stream(
         return
     try:
         while True:
-            if client.get_source_closed().is_set():
+            if await room_service.client_is_close(client):
                 return
-            queue = client.get_frame_queue()
-            try:
-                frame_data = await asyncio.wait_for(queue.get(), timeout=0.1)
-            except asyncio.TimeoutError:
+            frame_data = await room_service.get_frame(client)
+            if frame_data is None:
+                await asyncio.sleep(0.01)
                 continue
-            img = frame_data["src"]
-            new_img = frame_data["prc"]
-            results = frame_data["results"]
+            img = frame_data.src
+            new_img = frame_data.prc
+            results = frame_data.results
             if img is None or new_img is None:
                 continue
             _, buffer = cv2.imencode(".jpg", img)

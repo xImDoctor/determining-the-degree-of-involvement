@@ -7,7 +7,8 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.services.room import RoomNotFoundError, RoomService, get_room_service
+from app.db.rooms_and_clients import RoomNotFoundError
+from app.services.room import RoomService
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +16,7 @@ room_router = APIRouter()
 
 
 @room_router.get("/rooms")
-async def get_rooms(room_service: Annotated[RoomService, Depends(get_room_service)]):
+async def get_rooms(room_service: Annotated[RoomService, Depends()]):
     """
     Получение списка всех активных комнат.
 
@@ -31,7 +32,7 @@ async def get_rooms(room_service: Annotated[RoomService, Depends(get_room_servic
 
 
 @room_router.get("/rooms/{room_id}/clients")
-async def get_clients(room_id: str, room_service: Annotated[RoomService, Depends(get_room_service)]):
+async def get_clients(room_id: str, room_service: Annotated[RoomService, Depends()]):
     """
     Получение списка клиентов в указанной комнате.
 
