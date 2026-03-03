@@ -109,10 +109,7 @@ class ClientAndRoomStorage:
             room_id: ID комнаты
             client: Объект клиента для добавления
         """
-        room_members = await self.redis.smembers("rooms")
-        room_id_bytes = room_id.encode() if isinstance(room_id, str) else room_id
-        if room_id_bytes not in room_members:
-            await self.redis.sadd("rooms", room_id)
+        await self.redis.sadd("rooms", room_id)
         await self.redis.sadd(f"room:{room_id}", str(client.id_))
         await self.redis.hset(
             f"client:{client.id_}", mapping={"name": client.name, "source_closed": str(client.source_closed)}
