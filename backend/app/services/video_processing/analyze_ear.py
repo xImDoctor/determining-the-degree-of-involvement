@@ -34,8 +34,8 @@ class EyeAspectRatioAnalyzeResult:
     eyes_open: bool  # Открыты ли глаза
     blink_count: int  # Общее количество морганий
     is_blinking: bool  # Моргает ли сейчас
-    ear_history: list[float]
-    attention_state: Literal["Alert", "Normal", "Drowsy", "Very Drowsy"]
+    ear_history: list[float] | None = None
+    attention_state: Literal["Alert", "Normal", "Drowsy", "Very Drowsy"] = "Normal"
 
 
 # TODO: донастройка параметров и порогов при практическом тесте механизма
