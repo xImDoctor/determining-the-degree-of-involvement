@@ -114,8 +114,6 @@ class ClientAndRoomStorage:
         await self.redis.hset(
             f"client:{client.id_}", mapping={"name": client.name, "source_closed": str(client.source_closed)}
         )
-        self.pubsubs[str(client.id_)] = self.redis.pubsub()
-        await self.pubsubs[str(client.id_)].subscribe(f"client_stream:{client.id_}")
 
     async def get_client(self, room_id: str, client_id: UUID) -> Client:
         """
