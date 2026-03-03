@@ -281,6 +281,10 @@ class ClientAndRoomStorage:
             [from_dict(OneFaceMetricsAnalyzeResult, item) for item in data["result"]],
         )
 
+    async def flushdb(self) -> None:
+        """Flush all keys from the current database."""
+        await self.redis.flushdb()
+
     @staticmethod
     def _img_to_base64(img: cv2.typing.MatLike) -> str:
         _, buffer = cv2.imencode(".jpg", img)
