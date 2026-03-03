@@ -1,7 +1,7 @@
 import base64
+import json
 import logging
 from dataclasses import asdict, dataclass
-from json import JSONDecoder, JSONEncoder
 from uuid import UUID
 
 import cv2
@@ -13,6 +13,26 @@ from app.core.config import settings
 from app.services.video_processing import OneFaceMetricsAnalyzeResult
 
 logger = logging.getLogger(__name__)
+
+
+def _result_to_dict(result: OneFaceMetricsAnalyzeResult) -> dict:
+    """Convert OneFaceMetricsAnalyzeResult to dict, excluding ear_history for smaller payload."""
+    data = asdict(result)
+    if data.get("ear") and "ear_history" in data["ear"]:
+        del data["ear"]["ear_history"]
+    return data
+
+
+def _convert_tuples(data: dict) -> None:
+    """Recursively convert lists to tuples for fields that require tuples (bbox, vectors)."""
+    if "bbox" in data and isinstance(data["bbox"], list):
+        data["bbox"] = tuple(data["bbox"])
+    if "head_pose" in data and data["head_pose"]:
+        hp = data["head_pose"]
+        if "rotation_vec" in hp and isinstance(hp["rotation_vec"], list):
+            hp["rotation_vec"] = tuple(hp["rotation_vec"])
+        if "translation_vec" in hp and isinstance(hp["translation_vec"], list):
+            hp["translation_vec"] = tuple(hp["translation_vec"])
 
 
 class RoomNotFoundError(Exception):
@@ -235,12 +255,12 @@ class ClientAndRoomStorage:
 
     async def send_frame(self, client: Client, src_b64: str, prc_b64: str, results: list[OneFaceMetricsAnalyzeResult]):
         logger.debug(f"Sending frame to client {client.id_} (results count: {len(results)})")
-        json = {
+        payload = {
             "src": src_b64,
             "prc": prc_b64,
-            "result": list(map(asdict, results)),
+            "result": [_result_to_dict(r) for r in results],
         }
-        await self.redis.publish(f"client_stream:{client.id_}", JSONEncoder().encode(json))
+        await self.redis.publish(f"client_stream:{client.id_}", json.dumps(payload))
 
     async def get_frame(self, client: Client, timeout: float = 0.0) -> ClientFrame | None:
         logger.debug(f"Getting frame for client {client.id_} (timeout: {timeout:.2f})")
@@ -251,17 +271,14 @@ class ClientAndRoomStorage:
         message = await pubsub.get_message(ignore_subscribe_messages=True, timeout=timeout)
         if not message or message["type"] != "message":
             return None
-        json = JSONDecoder().decode(message["data"].decode())
-        for item in json["result"]:
-            item["bbox"] = tuple(item["bbox"])
-            if item["head_pose"]:
-                item["head_pose"]["rotation_vec"] = tuple(item["head_pose"]["rotation_vec"])
-                item["head_pose"]["translation_vec"] = tuple(item["head_pose"]["translation_vec"])
-        logger.debug(f"Frame received for client {client.id_} (results count: {len(json['result'])})")
+        data = json.loads(message["data"].decode())
+        for item in data["result"]:
+            _convert_tuples(item)
+        logger.debug(f"Frame received for client {client.id_} (results count: {len(data['result'])})")
         return ClientFrame(
-            self._base64_to_img(json["src"]),
-            self._base64_to_img(json["prc"]),
-            [from_dict(OneFaceMetricsAnalyzeResult, item) for item in json["result"]],
+            self._base64_to_img(data["src"]),
+            self._base64_to_img(data["prc"]),
+            [from_dict(OneFaceMetricsAnalyzeResult, item) for item in data["result"]],
         )
 
     @staticmethod
