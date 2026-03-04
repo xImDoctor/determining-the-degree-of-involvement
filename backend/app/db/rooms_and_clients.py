@@ -83,6 +83,13 @@ class ClientFrame:
     results: list[OneFaceMetricsAnalyzeResult]
 
 
+@dataclass
+class ClientFrameRaw:
+    src_b64: str
+    prc_b64: str
+    results: list[OneFaceMetricsAnalyzeResult]
+
+
 class ClientAndRoomStorage:
     def __init__(self):
         self.redis = redis.Redis(
@@ -279,6 +286,25 @@ class ClientAndRoomStorage:
         return ClientFrame(
             self._base64_to_img(data["src"]),
             self._base64_to_img(data["prc"]),
+            [from_dict(OneFaceMetricsAnalyzeResult, item) for item in data["result"]],
+        )
+
+    async def get_frame_raw(self, client: Client, timeout: float = 0.0) -> ClientFrameRaw | None:
+        logger.debug(f"Getting frame for client {client.id_} (timeout: {timeout:.2f})")
+        if str(client.id_) not in self.pubsubs:
+            self.pubsubs[str(client.id_)] = self.redis.pubsub()
+            await self.pubsubs[str(client.id_)].subscribe(f"client_stream:{client.id_}")
+        pubsub = self.pubsubs[str(client.id_)]
+        message = await pubsub.get_message(ignore_subscribe_messages=True, timeout=timeout)
+        if not message or message["type"] != "message":
+            return None
+        data = json.loads(message["data"].decode())
+        for item in data["result"]:
+            _convert_tuples(item)
+        logger.debug(f"Frame received for client {client.id_} (results count: {len(data['result'])})")
+        return ClientFrameRaw(
+            data["src"],
+            data["prc"],
             [from_dict(OneFaceMetricsAnalyzeResult, item) for item in data["result"]],
         )
 

@@ -75,12 +75,10 @@ async def stream(
             new_img = analyze_res.image
             results = analyze_res.metrics
 
-            _, src_buffer = cv2.imencode(".jpg", img)
             _, prc_buffer = cv2.imencode(".jpg", new_img)
-            src_b64 = base64.b64encode(src_buffer).decode("utf-8")
             prc_b64 = base64.b64encode(prc_buffer).decode("utf-8")
 
-            await room_service.send_frame(client, src_b64, prc_b64, results)
+            await room_service.send_frame(client, image_b64, prc_b64, results)
             results_serializable = list(map(asdict, results))
             await websocket.send_json({"image": prc_b64, "results": results_serializable})
     except WebSocketDisconnect:
@@ -127,22 +125,13 @@ async def client_stream(
         while True:
             if await room_service.client_is_closed(client):
                 return
-            frame_data = await room_service.get_frame(client)
+            frame_data = await room_service.get_frame_raw(client)
             if frame_data is None:
                 await asyncio.sleep(0.01)
                 continue
-            img = frame_data.src
-            new_img = frame_data.prc
-            results = frame_data.results
-            if img is None or new_img is None:
-                continue
-            _, buffer = cv2.imencode(".jpg", img)
-            img_src_base64 = base64.b64encode(buffer).decode("utf-8")
-            _, buffer = cv2.imencode(".jpg", new_img)
-            img_base64 = base64.b64encode(buffer).decode("utf-8")
-            results_serializable = list(map(asdict, results))
+            results_serializable = list(map(asdict, frame_data.results))
             await websocket.send_json(
-                {"image_src": img_src_base64, "image": img_base64, "results": results_serializable}
+                {"image_src": frame_data.src_b64, "image": frame_data.prc_b64, "results": results_serializable}
             )
 
     except WebSocketDisconnect:

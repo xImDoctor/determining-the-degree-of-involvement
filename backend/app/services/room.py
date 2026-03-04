@@ -5,7 +5,7 @@
 import logging
 from uuid import UUID
 
-from app.db.rooms_and_clients import Client, ClientAndRoomStorage, ClientFrame, Room
+from app.db.rooms_and_clients import Client, ClientAndRoomStorage, ClientFrame, ClientFrameRaw, Room
 from app.services.video_processing import OneFaceMetricsAnalyzeResult
 
 logger = logging.getLogger(__name__)
@@ -101,3 +101,6 @@ class RoomService:
 
     async def get_frame(self, client: Client, timeout: float = 0.0) -> ClientFrame | None:
         return await self.storage.get_frame(client, timeout)  # type: ignore[no-any-return]
+
+    async def get_frame_raw(self, client: Client, timeout: float = 0.0) -> ClientFrameRaw | None:
+        return await self.storage.get_frame_raw(client, timeout)
