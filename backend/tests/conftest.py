@@ -93,9 +93,9 @@ def mock_redis():
 def room_service(mock_redis, monkeypatch):
     from app.services.room import RoomService
 
-    monkeypatch.setattr("app.db.rooms_and_clients.redis.Redis", lambda **kwargs: mock_redis)
     storage = RoomService.storage
     storage.redis = mock_redis
+    storage.pubsubs = {}
     return RoomService()
 
 
