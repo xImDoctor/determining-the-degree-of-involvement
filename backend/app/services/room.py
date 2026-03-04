@@ -5,7 +5,7 @@
 import logging
 from uuid import UUID
 
-from app.db.rooms_and_clients import Client, ClientAndRoomStorage, ClientFrame, ClientFrameRaw, Room
+from app.db.rooms_and_clients import Client, ClientAndRoomStorage, ClientFrameRaw, Room
 from app.services.video_processing import OneFaceMetricsAnalyzeResult
 
 logger = logging.getLogger(__name__)

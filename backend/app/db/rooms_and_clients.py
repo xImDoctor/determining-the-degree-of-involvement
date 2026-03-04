@@ -1,11 +1,9 @@
-import base64
 import json
 import logging
 from dataclasses import asdict, dataclass
 from uuid import UUID
 
 import cv2
-import numpy as np
 import redis.asyncio as redis
 from dacite import from_dict
 
