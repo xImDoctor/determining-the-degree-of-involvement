@@ -97,7 +97,7 @@ class ClientAndRoomStorage:
             db=settings.redis_db,
             password=settings.redis_password if settings.redis_password else None,
             socket_timeout=settings.redis_timeout,
-            decode_responses=True
+            decode_responses=True,
         )
         self.pubsubs: dict[str, redis.client.PubSub] = {}  # client id : pubsub
         self.tracked_clients: set[Client] = set()
@@ -234,9 +234,7 @@ class ClientAndRoomStorage:
         for client_id in client_ids:
             client_data: dict[str, str] = await self.redis.hgetall(f"client:{client_id}")
             clients.append(
-                Client(
-                    UUID(client_id), client_data["name"], room_id, client_data["source_closed"] == "True"
-                )
+                Client(UUID(client_id), client_data["name"], room_id, client_data["source_closed"] == "True")
             )
         logger.debug(f"Found {len(clients)} clients in room {room_id}")
         return clients
@@ -271,8 +269,7 @@ class ClientAndRoomStorage:
         logger.debug(f"Client {client.id_} is_closed={is_closed}")
         return is_closed
 
-    async def send_frame(
-        self, client: Client, src_b64: str, prc_b64: str, results: list[OneFaceMetricsAnalyzeResult]):
+    async def send_frame(self, client: Client, src_b64: str, prc_b64: str, results: list[OneFaceMetricsAnalyzeResult]):
         """
         Отправляет кадр клиенту через Redis Pub/Sub.
 
