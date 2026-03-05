@@ -100,10 +100,15 @@ class FaceAnalysisPipeline:
 
     def analyze(self, image: cv2.typing.MatLike) -> FaceAnalyzeResult:
         """
-        Детектирует лица и распознаёт эмоции (Опционально - EAR и HeadPose)
-        :param image: Входное изображение с лицами для анализа
-        :return: Возвращает изображение с bbox'ами и список результатов для каждого лица.
-        Формат: (image, [{'emotion': str, 'confidence': float, 'ear': dict, 'head_pose': dict}, ...])
+        Детектирует лица и распознаёт эмоции (опционально - EAR и HeadPose).
+
+        Args:
+            image: Входное изображение с лицами для анализа
+
+        Returns:
+            FaceAnalyzeResult: Результат анализа, содержащий:
+                - image: Изображение с отрисованными bbox'ами и метриками
+                - metrics: Список OneFaceMetricsAnalyzeResult для каждого обнаруженного лица
         """
         vis_image = image.copy()
         try:

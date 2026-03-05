@@ -71,11 +71,23 @@ class FaceDetector:
         if not 0 <= min_detection_confidence <= 1:
             raise ValueError('"min_detection_confidence" should be in [0, 1]')
 
-    def set_margin(self, margin: int):
+    def set_margin(self, margin: int) -> None:
+        """
+        Устанавливает отступ для bounding box лица.
+
+        Args:
+            margin: Значение отступа в пикселях
+        """
         self._validate_margin(margin)
         self.margin = margin
 
-    def set_min_detection_confidence(self, min_detection_confidence: float):
+    def set_min_detection_confidence(self, min_detection_confidence: float) -> None:
+        """
+        Устанавливает минимальный порог уверенности для детекции лиц.
+
+        Args:
+            min_detection_confidence: Значение порога в диапазоне [0, 1]
+        """
         self._validate_confidence(min_detection_confidence)
         self.detector = mp_face_detection.FaceDetection(
             model_selection=settings.face_detection_model_selection,

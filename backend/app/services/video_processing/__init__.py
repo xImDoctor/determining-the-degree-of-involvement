@@ -16,6 +16,5 @@ from .face_analysis_pipeline import make_face_analysis_pipeline as make_face_ana
 from .face_detection import FaceDetector as FaceDetector
 from .face_detection import FaceDetectResult as FaceDetectResult
 from .service import FaceAnalysisPipelineService as FaceAnalysisPipelineService
-from .service import get_face_analysis_pipeline_service as get_face_analysis_pipeline_service
 from .video_stream import CaptureReadError as CaptureReadError
 from .video_stream import process_video_stream as process_video_stream

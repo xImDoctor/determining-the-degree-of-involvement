@@ -1,4 +1,17 @@
 services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
   engagement-detector:
     build: backend
     image: attention-server:latest
@@ -32,6 +45,15 @@ services:
       - HEAD_YAW_ATTENTIVE=${HEAD_YAW_ATTENTIVE}
       - HEAD_PITCH_DISTRACTED=${HEAD_PITCH_DISTRACTED}
       - HEAD_YAW_DISTRACTED=${HEAD_YAW_DISTRACTED}
+      - REDIS_HOST=redis
+      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_DB=${REDIS_DB}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_TIMEOUT=${REDIS_TIMEOUT}
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "${WORKERS}"]
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -45,3 +67,6 @@ services:
             - driver: nvidia
               count: all
               capabilities: [ gpu ]
+
+volumes:
+  redis_data:

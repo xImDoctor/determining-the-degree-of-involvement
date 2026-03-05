@@ -16,7 +16,9 @@ dependencies = [
     "fastapi>=0.100",
     "uvicorn[standard]",
     "websockets",
-    "python-multipart"
+    "python-multipart",
+    "redis[hiredis]",
+    "dacite"
 ]
 
 [project.optional-dependencies]

@@ -29,6 +29,10 @@ pip install -r requirements.txt
 ### Local
 
 ```bash
+# Start Redis server first (required)
+redis-server
+
+# Run the backend
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
@@ -94,6 +98,7 @@ backend/
 │   │   └── room.py      # REST room endpoints
 │   ├── core/
 │   │   └── config.py    # Configuration
+│   ├── db/              # Database
 │   ├── schemas/         # Pydantic models
 │   └── services/
 │       ├── room.py              # Room management

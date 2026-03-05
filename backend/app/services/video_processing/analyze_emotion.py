@@ -99,12 +99,28 @@ class EmotionRecognizer:
         if window_size < 0:
             raise ValueError('"window_size" should be >= 0')
 
-    def set_window_size(self, window_size: int):
+    def set_window_size(self, window_size: int) -> None:
+        """
+        Устанавливает размер окна для сглаживания.
+
+        Args:
+            window_size: Размер окна для temporal smoothing
+        """
         self._validate_window_size(window_size)
         self.history = deque(maxlen=window_size)
 
     @staticmethod
-    def _validate_confidence_threshold(confidence_threshold: float):
+    def _validate_confidence_threshold(confidence_threshold: float) -> None:
+        """
+        Валидация порога уверенности.
+
+        Args:
+            confidence_threshold: Значение порога для проверки
+
+        Raises:
+            TypeError: Если тип не float
+            ValueError: Если значение вне диапазона [0;1]
+        """
         if not isinstance(confidence_threshold, (float, int)):
             raise TypeError(
                 f'Type of "confidence_threshold" should be float, got {type(confidence_threshold).__name__}'
@@ -112,18 +128,40 @@ class EmotionRecognizer:
         if confidence_threshold < 0 or confidence_threshold > 1:
             raise ValueError('"confidence_threshold" should be in [0;1]')
 
-    def set_confidence_threshold(self, confidence_threshold: float):
+    def set_confidence_threshold(self, confidence_threshold: float) -> None:
+        """
+        Устанавливает минимальный порог уверенности для распознавания эмоций.
+
+        Args:
+            confidence_threshold: Значение порога в диапазоне [0, 1]
+        """
         self._validate_confidence_threshold(confidence_threshold)
         self.confidence_threshold = confidence_threshold
 
     @staticmethod
-    def _validate_ambiguity_threshold(ambiguity_threshold: float):
+    def _validate_ambiguity_threshold(ambiguity_threshold: float) -> None:
+        """
+        Валидация порога амбивалентности.
+
+        Args:
+            ambiguity_threshold: Значение порога для проверки
+
+        Raises:
+            TypeError: Если тип не float
+            ValueError: Если значение вне диапазона [0;1]
+        """
         if not isinstance(ambiguity_threshold, (float, int)):
             raise TypeError(f'Type of "ambiguity_threshold" should be float, got {type(ambiguity_threshold).__name__}')
         if ambiguity_threshold < 0 or ambiguity_threshold > 1:
             raise ValueError('"ambiguity_threshold" should be in [0;1]')
 
-    def set_ambiguity_threshold(self, ambiguity_threshold: float):
+    def set_ambiguity_threshold(self, ambiguity_threshold: float) -> None:
+        """
+        Устанавливает порог для определения амбивалентных эмоций.
+
+        Args:
+            ambiguity_threshold: Значение порога в диапазоне [0, 1]
+        """
         self._validate_ambiguity_threshold(ambiguity_threshold)
         self.ambiguity_threshold = ambiguity_threshold
 

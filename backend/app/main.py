@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.room import room_router
 from app.api.stream import stream_router
 from app.core.config import settings
+from app.services.room import RoomService
 
 logging.getLogger().handlers.clear()
 logging.basicConfig(
@@ -31,6 +32,7 @@ async def lifespan(app: FastAPI):
     logger.info(f"API version: {settings.app_version}")
     yield
     logger.info("Shutting down engagement detection API")
+    await RoomService.storage.remove_tracked_clients_from_db()
 
 
 app = FastAPI(

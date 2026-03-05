@@ -3,11 +3,9 @@
 """
 
 import logging
-from typing import cast
 from uuid import UUID
 
 from cv2.typing import MatLike
-from fastapi import FastAPI, Request, WebSocket
 
 from .face_analysis_pipeline import (
     FaceAnalysisPipeline,
@@ -25,9 +23,10 @@ class FaceAnalysisPipelineService:
     Создает и хранит отдельный экземпляр FaceAnalysisPipeline для каждого клиента.
     """
 
+    _analyzers: dict[UUID, FaceAnalysisPipeline] = {}
+
     def __init__(self):
         """Инициализирует сервис."""
-        self._analyzers: dict[UUID, FaceAnalysisPipeline] = {}
 
     async def analyze(self, client_id: UUID, image: MatLike) -> FaceAnalyzeResult:
         """
@@ -51,34 +50,3 @@ class FaceAnalysisPipelineService:
         removed = self._analyzers.pop(client_id, None)
         if removed is not None:
             logger.debug(f"Removed FaceAnalysisPipeline for client {client_id}")
-
-
-def get_face_analysis_pipeline_service(
-    request: Request = None,  # type: ignore[assignment]
-    websocket: WebSocket = None,  # type: ignore[assignment]
-) -> FaceAnalysisPipelineService:
-    """
-    Получает экземпляр FaceAnalysisPipelineService из состояния приложения FastAPI.
-
-    Если сервис еще не инициализирован, создает новый экземпляр.
-
-    Args:
-        request: Объект HTTP запроса FastAPI (опционально)
-        websocket: Объект WebSocket соединения (опционально)
-
-    Returns:
-        FaceAnalysisPipelineService: Экземпляр сервиса анализа лиц
-
-    Raises:
-        RuntimeError: Если не передан ни request, ни websocket
-    """
-    app: FastAPI
-    if request is not None:
-        app = request.app
-    elif websocket is not None:
-        app = websocket.app
-    else:
-        raise RuntimeError('get_face_analysis_pipeline_service expected "request" or "websocket" arg, got Nones')
-    if not hasattr(app.state, "face_analysis_pipeline_service"):
-        app.state.face_analysis_pipeline_service = FaceAnalysisPipelineService()
-    return cast(FaceAnalysisPipelineService, app.state.face_analysis_pipeline_service)

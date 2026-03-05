@@ -6,6 +6,13 @@ from .face_detection import FaceDetector
 
 
 class CaptureReadError(Exception):
+    """
+    Исключение, выбрасываемое при ошибке чтения кадра из видеопотока.
+
+    Attributes:
+        message: Сообщение об ошибке
+    """
+
     pass
 
 

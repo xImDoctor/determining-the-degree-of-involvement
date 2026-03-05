@@ -75,6 +75,14 @@ class Settings(BaseSettings):
     head_pitch_distracted: float = 30.0
     head_yaw_distracted: float = 40.0
 
+    # Redis Configuration
+    # -------------------------------------------------------------------------
+    redis_host: str = "localhost"
+    redis_port: int = 6379
+    redis_db: int = 0
+    redis_password: str = ""
+    redis_timeout: int = 5
+
     def get_cors_origins(self) -> list[str]:
         """
         Получает список разрешенных источников CORS.
