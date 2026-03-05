@@ -83,12 +83,13 @@ def mock_redis():
 
 
 @pytest.fixture
-def room_service(mock_redis, monkeypatch):
+def room_service(mock_redis):
     from app.services.room import RoomService
 
     storage = RoomService.storage
     storage.redis = mock_redis
     storage.pubsubs = {}
+    storage.tracked_clients = set()
     return RoomService()
 
 

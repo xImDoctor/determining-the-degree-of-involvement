@@ -76,13 +76,6 @@ class Room:
 
 
 @dataclass
-class ClientFrame:
-    src: cv2.typing.MatLike
-    prc: cv2.typing.MatLike
-    results: list[OneFaceMetricsAnalyzeResult]
-
-
-@dataclass
 class ClientFrameRaw:
     src_b64: str
     prc_b64: str
@@ -320,5 +313,5 @@ class ClientAndRoomStorage:
         """
         Удалить всех клиентов созданых воркером
         """
-        for client in self.tracked_clients:
+        for client in self.tracked_clients.copy():
             await self.remove_client(client.room_id, client)
