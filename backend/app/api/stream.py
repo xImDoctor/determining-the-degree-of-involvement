@@ -54,7 +54,7 @@ async def stream(
     client_id = uuid4()
     client_name = name if name else f"client_{client_id.hex[:8]}"
     client: Client = Client(id_=client_id, name=client_name, room_id=room_id)
-    await room_service.add_client(room_id, client)
+    await room_service.add_client(client)
     logger.info(f"Client {client.id_} connected to room {room_id} (name: {client_name})")
     try:
         while True:
@@ -84,7 +84,7 @@ async def stream(
     except WebSocketDisconnect:
         logger.info(f"Client {client.id_} disconnected from room {room_id}")
     finally:
-        await room_service.remove_client(room_id, client)
+        await room_service.remove_client(client)
         await analyzer_service.remove(client.id_)
 
 

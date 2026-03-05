@@ -32,17 +32,16 @@ class RoomService:
         """
         return await self.storage.get_rooms()  # type: ignore[no-any-return]
 
-    async def add_client(self, room_id: str, client: Client):
+    async def add_client(self, client: Client):
         """
         Добавляет клиента в комнату.
 
         Если комната не существует, она будет создана.
 
         Args:
-            room_id: ID комнаты
             client: Объект клиента для добавления
         """
-        await self.storage.add_client(room_id, client)
+        await self.storage.add_client(client)
 
     async def get_client(self, room_id: str, client_id: UUID) -> Client:
         """
@@ -61,18 +60,17 @@ class RoomService:
         """
         return await self.storage.get_client(room_id, client_id)  # type: ignore[no-any-return]
 
-    async def remove_client(self, room_id: str, client: Client):
+    async def remove_client(self, client: Client):
         """
         Удаляет клиента из комнаты.
 
         Если в комнате больше нет клиентов, комната также удаляется.
 
         Args:
-            room_id: ID комнаты
             client: Объект клиента для удаления
         """
         await self.close_client(client)
-        await self.storage.remove_client(room_id, client)
+        await self.storage.remove_client(client)
 
     async def get_clients_in_room(self, room_id: str) -> list[Client]:
         """

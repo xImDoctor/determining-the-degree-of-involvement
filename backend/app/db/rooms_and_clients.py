@@ -3,7 +3,6 @@ import logging
 from dataclasses import asdict, dataclass
 from uuid import UUID
 
-import cv2
 import redis.asyncio as redis
 from dacite import from_dict
 
@@ -123,16 +122,16 @@ class ClientAndRoomStorage:
         logger.debug(f"Found {len(rooms)} rooms")
         return rooms
 
-    async def add_client(self, room_id: str, client: Client):
+    async def add_client(self, client: Client):
         """
         Добавляет клиента в комнату.
 
         Если комната не существует, она будет создана.
 
         Args:
-            room_id: ID комнаты
             client: Объект клиента для добавления
         """
+        room_id = client.room_id
         logger.info(f"Adding client {client.id_} to room {room_id}")
         await self.redis.sadd("rooms", room_id)
         await self.redis.sadd(f"room:{room_id}", str(client.id_))
@@ -171,16 +170,16 @@ class ClientAndRoomStorage:
         client_data: dict[str, str] = await self.redis.hgetall(f"client:{client_id_str}")
         return Client(client_id, client_data["name"], room_id, client_data["source_closed"] == "True")
 
-    async def remove_client(self, room_id: str, client: Client):
+    async def remove_client(self, client: Client):
         """
         Удаляет клиента из комнаты.
 
         Если в комнате больше нет клиентов, комната также удаляется.
 
         Args:
-            room_id: ID комнаты
             client: Объект клиента для удаления
         """
+        room_id = client.room_id
         logger.info(f"Removing client {client.id_} from room {room_id}")
         room_members = await self.redis.smembers("rooms")
         if room_id not in room_members:
@@ -314,4 +313,4 @@ class ClientAndRoomStorage:
         Удалить всех клиентов созданых воркером
         """
         for client in self.tracked_clients.copy():
-            await self.remove_client(client.room_id, client)
+            await self.remove_client(client)
