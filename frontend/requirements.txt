@@ -1,8 +1,0 @@
-streamlit
-numpy
-torch
-opencv-python-headless
-torchvision
-mediapipe==0.10.13
-timm==0.9.16
-emotiefflib

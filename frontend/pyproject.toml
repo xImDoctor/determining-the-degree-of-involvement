@@ -1,0 +1,16 @@
+[project]
+name = "engagement-detection-frontend"
+version = "0.1.0"
+description = "Real-time emotion detection frontend with Streamlit"
+requires-python = ">=3.12"
+dependencies = [
+    "streamlit",
+    "numpy",
+    "torch",
+    "opencv-python-headless",
+    "torchvision",
+    "mediapipe==0.10.13",
+    "timm==0.9.16",
+    "emotiefflib",
+    "pydantic_settings"
+]

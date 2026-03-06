@@ -12,9 +12,9 @@ services:
       timeout: 5s
       retries: 3
 
-  engagement-detector:
+  engagement-detector-backend:
     build: backend
-    image: attention-server:latest
+    image: engagement-detector-backend:latest
     ports:
       - "8000:8000"
     env_file:
@@ -67,6 +67,32 @@ services:
             - driver: nvidia
               count: all
               capabilities: [ gpu ]
+
+  engagement-detector-frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    image: engagement-detector-frontend:lasted
+    ports:
+      - "8501:8501"
+    depends_on:
+      engagement-detector-backend:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8501/_stcore/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [ gpu ]
+    devices:
+      - "/dev/video0:/dev/video0" # TODO frontend must not use the server cam, remove afret to update frontend
 
 volumes:
   redis_data:

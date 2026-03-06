@@ -1,5 +1,5 @@
 [project]
-name = "emotion-detection-backend"
+name = "engagement-detection-backend"
 version = "0.1.0"
 description = "Real-time emotion detection backend with FastAPI"
 requires-python = ">=3.12"

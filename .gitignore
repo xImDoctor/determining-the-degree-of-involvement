@@ -2,7 +2,7 @@
 test_log_*
 screenshot_*
 
-# temp files of emotion_detection_app.py
+# temp files of frontend/src/main.py
 temp_preview.jpg
 
 # Byte-compiled / optimized / DLL files
