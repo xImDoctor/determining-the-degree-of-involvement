@@ -12,9 +12,9 @@ services:
       timeout: 5s
       retries: 3
 
-  engagement-detector:
+  engagement-detector-backend:
     build: backend
-    image: attention-server:latest
+    image: engagement-detector-backend:latest
     ports:
       - "8000:8000"
     env_file:
