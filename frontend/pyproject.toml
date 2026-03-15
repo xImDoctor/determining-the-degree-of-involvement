@@ -1,0 +1,31 @@
+[project]
+name = "engagement-detection-frontend"
+version = "0.1.0"
+description = "Streamlit frontend for real-time engagement detection"
+requires-python = ">=3.12"
+dependencies = [
+    "streamlit",
+    "numpy",
+    "opencv-python-headless",
+    "plotly",
+    "websocket-client",
+    "requests",
+    "Pillow",
+]
+
+[project.optional-dependencies]
+tools = [
+    "torch",
+    "torchvision",
+    "mediapipe==0.10.13",
+    "timm==0.9.16",
+    "emotiefflib",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = []

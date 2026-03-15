@@ -56,7 +56,7 @@ st.set_page_config(
 # Загрузка внешних CSS стилей
 def load_css():
     """Загружает внешний CSS файл"""
-    css_file = Path(__file__).parent / "styles.css"
+    css_file = Path(__file__).parent.parent / "styles.css"
     if css_file.exists():
         with open(css_file, encoding='utf-8') as f:
             st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
@@ -417,7 +417,7 @@ if 'backend_params' not in st.session_state:
         'enable_ear': False,  # Включить EAR анализ
         'enable_head_pose': False,  # Включить Head Pose анализ
         'ear_threshold': 0.25,  # Порог EAR для закрытых глаз
-        'consec_frames': 1  # Количество последовательных кадров для моргания (1 = любое закрытие глаз)
+        'consec_frames': 3  # Количество последовательных кадров для моргания
     }
 
 if 'webcam_running' not in st.session_state:
@@ -990,7 +990,7 @@ def create_webcam_section():
                             if params.get('enable_ear'):
                                 new_ear = EyeAspectRatioAnalyzer(
                                     ear_threshold=params.get('ear_threshold', 0.25),
-                                    consec_frames=params.get('consec_frames', 1)
+                                    consec_frames=params.get('consec_frames', 3)
                                 )
                                 detector.set_ear_analyzer(new_ear)
                             else:
@@ -1000,7 +1000,7 @@ def create_webcam_section():
                             if params.get('ear_threshold') != prev_params.get('ear_threshold'):
                                 detector.ear_analyzer.set_ear_threshold(params.get('ear_threshold', 0.25))
                             if params.get('consec_frames') != prev_params.get('consec_frames'):
-                                detector.ear_analyzer.set_consec_frames(params.get('consec_frames', 1))
+                                detector.ear_analyzer.set_consec_frames(params.get('consec_frames', 3))
 
                         # Hot-reload HeadPose анализатора
                         if params.get('enable_head_pose') != prev_params.get('enable_head_pose'):

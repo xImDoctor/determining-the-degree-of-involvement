@@ -68,5 +68,23 @@ services:
               count: all
               capabilities: [ gpu ]
 
+  engagement-detector-frontend:
+    build: frontend
+    image: engagement-detector-frontend:latest
+    ports:
+      - "8501:8501"
+    environment:
+      - BACKEND_WS_URL=ws://engagement-detector-backend:8000
+      - BACKEND_HTTP_URL=http://engagement-detector-backend:8000
+    depends_on:
+      engagement-detector-backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
 volumes:
   redis_data:
