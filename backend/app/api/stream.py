@@ -13,8 +13,16 @@ import cv2
 import numpy as np
 from cv2 import error
 from fastapi import APIRouter, Depends, Path, Query, WebSocket, WebSocketDisconnect, status
+from pydantic import ValidationError
 
 from app.db.rooms_and_clients import Client, ClientNotFoundError, RoomNotFoundError
+from app.schemas.stream import (
+    ErrorResponse,
+    FaceAnalysisResult,
+    FrameRequest,
+    FrameResponse,
+    OutputStreamFrameResponse,
+)
 from app.services.room import RoomService
 from app.services.video_processing import FaceAnalysisPipelineService
 
@@ -59,14 +67,26 @@ async def stream(
     try:
         while True:
             data = await websocket.receive_json()
-            image_b64 = data.get("image")
+
+            # Валидация входящего сообщения через Pydantic-схему
+            try:
+                frame_request = FrameRequest.model_validate(data)
+            except ValidationError as e:
+                logger.warning(f"Invalid frame request from client {client.id_}: {e}")
+                await websocket.send_json(ErrorResponse(error=str(e)).model_dump())
+                continue
+
+            image_b64 = frame_request.image
+
             try:
                 image_bytes = base64.b64decode(image_b64)
                 nparr = np.frombuffer(image_bytes, np.uint8)
                 img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
             except (ValueError, TypeError, error) as e:
                 logger.warning(f"Failed to decode image from client {client.id_}: {e}")
-                await websocket.send_json({"error": f"Failed to decode image: {str(e)}"})
+                await websocket.send_json(
+                    ErrorResponse(error=f"Failed to decode image: {str(e)}").model_dump()
+                )
                 continue
             if img is None:
                 logger.warning("Could not decode img in /ws/rooms/{room_id}/stream")
@@ -79,8 +99,11 @@ async def stream(
             prc_b64 = base64.b64encode(prc_buffer).decode("utf-8")
 
             await room_service.send_frame(client, image_b64, prc_b64, results)
-            results_serializable = list(map(asdict, results))
-            await websocket.send_json({"image": prc_b64, "results": results_serializable})
+
+            # Сериализация ответа через Pydantic-схему
+            results_validated = [FaceAnalysisResult.model_validate(asdict(r)) for r in results]
+            response = FrameResponse(image=prc_b64, results=results_validated)
+            await websocket.send_json(response.model_dump())
     except WebSocketDisconnect:
         logger.info(f"Client {client.id_} disconnected from room {room_id}")
     finally:
@@ -118,7 +141,7 @@ async def client_stream(
         client = await room_service.get_client(room_id, client_id)
     except (RoomNotFoundError, ClientNotFoundError) as e:
         logger.warning(f"Failed to get client {client_id} in room {room_id}: {e}")
-        await websocket.send_json({"error": str(e)})
+        await websocket.send_json(ErrorResponse(error=str(e)).model_dump())
         await websocket.close(status.WS_1008_POLICY_VIOLATION)
         return
     try:
@@ -129,10 +152,13 @@ async def client_stream(
             if frame_data is None:
                 await asyncio.sleep(0.01)
                 continue
-            results_serializable = list(map(asdict, frame_data.results))
-            await websocket.send_json(
-                {"image_src": frame_data.src_b64, "image": frame_data.prc_b64, "results": results_serializable}
+
+            # Сериализация ответа через Pydantic-схему
+            results_validated = [FaceAnalysisResult.model_validate(asdict(r)) for r in frame_data.results]
+            response = OutputStreamFrameResponse(
+                image_src=frame_data.src_b64, image=frame_data.prc_b64, results=results_validated
             )
+            await websocket.send_json(response.model_dump())
 
     except WebSocketDisconnect:
         logger.info(f"Output stream closed for client {client_id} in room {room_id}")
