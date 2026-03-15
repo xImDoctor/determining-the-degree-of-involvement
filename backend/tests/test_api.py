@@ -99,7 +99,8 @@ async def test_get_clients_in_room_success():
         assert response.status_code == 200
         data = response.json()
         assert len(data) == 1
-        assert data[0][0] == "test_client"
+        assert data[0]["name"] == "test_client"
+        assert "id_" in data[0]
 
     app.dependency_overrides.clear()
 
