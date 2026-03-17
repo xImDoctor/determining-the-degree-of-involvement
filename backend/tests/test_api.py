@@ -4,6 +4,7 @@ from uuid import uuid4
 import pytest
 from httpx import ASGITransport, AsyncClient
 
+from app.core.config import settings
 from app.db.rooms_and_clients import RoomNotFoundError
 from app.services.room import RoomService
 
@@ -30,7 +31,7 @@ async def test_health_check():
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "healthy"
-        assert data["version"] == "1.0.0"
+        assert data["version"] == settings.app_version
 
 
 @pytest.mark.asyncio
