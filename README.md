@@ -36,7 +36,7 @@ cd ../frontend && pip install -r requirements.txt
 #### 2. Run Redis Server (required for backend)
 
 ```bash
-redis-server
+redis-server --requirepass password
 ```
 
 #### 3. Run Backend
@@ -50,7 +50,7 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 ```bash
 cd frontend
-streamlit run emotion_detection_app.py
+streamlit run engagement_app.py
 ```
 
 ---
@@ -81,14 +81,17 @@ streamlit run emotion_detection_app.py
 │   │   ├── core/          # Configuration
 │   │   ├── db/            # Database
 │   │   ├── schemas/       # Pydantic models
-│   │   └── services/      # Business logic
+│   │   ├── services/      # Business logic
+│   │   └── main.py        # Application entry point
 │   ├── tests/             # Backend tests
 │   ├── scripts/           # Utility scripts
 │   ├── pyproject.toml
 │   └── Dockerfile
 ├── frontend/               # Streamlit frontend
-│   ├── emotion_detection_app.py
-│   └── styles.css
+│   ├── engagement_app.py  # Main application
+│   ├── api_client.py      # WebSocket client
+│   ├── styles.css
+│   └── requirements.txt
 └── tests/                  # Manual tests
     ├── html/              # WebSocket test page
     └── manual/            # Manual test scripts
