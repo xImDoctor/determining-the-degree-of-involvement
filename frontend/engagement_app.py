@@ -268,13 +268,13 @@ def create_webcam_section():
         col1, col2 = st.columns(2)
         with col1:
             if not st.session_state.webcam_running:
-                if st.button("▶️ Запустить", use_container_width=True):
+                if st.button("▶️ Запустить", width='stretch'):
                     st.session_state.webcam_running = True
                     st.rerun()
 
         with col2:
             if st.session_state.webcam_running:
-                if st.button("⏹️ Стоп", use_container_width=True):
+                if st.button("⏹️ Стоп", width='stretch'):
                     st.session_state.webcam_running = False
                     st.rerun()
 
@@ -352,7 +352,7 @@ def create_webcam_section():
                     new_height = int(height * new_width / width)
                     img_resized = cv2.resize(img_rgb, (new_width, new_height))
 
-                    video_placeholder.image(img_resized, channels="RGB", use_container_width=True)
+                    video_placeholder.image(img_resized, channels="RGB", width='stretch')
 
                     # Обновление метрик
                     if results:
@@ -411,7 +411,7 @@ def create_webcam_section():
                         if pie_fig:
                             pie_placeholder.plotly_chart(
                                 pie_fig,
-                                use_container_width=True,
+                                width='stretch',
                                 key=f"pie_{st.session_state.frame_count}",
                             )
 
@@ -425,7 +425,7 @@ def create_webcam_section():
                         if pose_fig:
                             pose_placeholder.plotly_chart(
                                 pose_fig,
-                                use_container_width=True,
+                                width='stretch',
                                 key=f"pose_{st.session_state.frame_count}",
                             )
 
@@ -437,7 +437,7 @@ def create_webcam_section():
                         if ear_fig:
                             ear_placeholder.plotly_chart(
                                 ear_fig,
-                                use_container_width=True,
+                                width='stretch',
                                 key=f"ear_{st.session_state.frame_count}",
                             )
 
