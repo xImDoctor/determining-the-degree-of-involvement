@@ -99,6 +99,69 @@ streamlit run engagement_app.py
 
 ---
 
+## Architecture
+
+```mermaid
+flowchart TB
+    subgraph Frontend["Frontend (Streamlit)"]
+        Cam["Webcam<br/>OpenCV"]
+        Client["API Client<br/>WebSocket"]
+        UI["Streamlit UI<br/>Charts/Metrics"]
+    end
+    
+    subgraph Backend["Backend (FastAPI)"]
+        WS["WebSocket<br/>/ws/rooms/{room_id}/stream"]
+        Service["FaceAnalysisPipelineService"]
+        
+        subgraph Pipeline["FaceAnalysisPipeline"]
+            FD["FaceDetector<br/>MediaPipe"]
+            ER["EmotionRecognizer<br/>PyTorch"]
+            EAR["EAR Analyzer<br/>Eye Aspect Ratio"]
+            HP["HeadPoseEstimator<br/>PnP Algorithm"]
+            EC["EngagementCalculator<br/>Weighted Score"]
+        end
+    end
+    
+    Cam -->|"Frame<br/>BGR"| Client
+    Client -->|"JSON<br/>{image: base64}"| WS
+    WS --> Service
+    Service --> FD
+    FD --> ER
+    FD --> EAR
+    FD --> HP
+    ER --> EC
+    EAR --> EC
+    HP --> EC
+    EC -->|"JSON<br/>{image, results}"| WS
+    WS --> Client
+    Client -->|"Processed Frame"| UI
+```
+
+### Data Flow
+
+1. **Capture**: Frontend captures video frame from webcam (OpenCV)
+2. **Encode**: Frame → JPEG → Base64 → JSON
+3. **Process**: Backend WebSocket → Decode → Pipeline → Encode response
+4. **Display**: Frontend renders processed frame and metrics
+
+### Processing Pipeline
+
+| Stage | Component           | Technology               |
+|-------|---------------------|--------------------------|
+| 1     | Face Detection      | MediaPipe Face Detection |
+| 2     | Emotion Recognition | PyTorch + EmotiEffLib    |
+| 3     | Eye Tracking        | EAR (Eye Aspect Ratio)   |
+| 4     | Head Pose           | PnP Algorithm            |
+| 5     | Engagement Score    | Weighted Formula         |
+
+### Engagement Formula
+
+```
+Engagement = 0.42 × Emotion + 0.33 × Eye_Score + 0.25 × HeadPose_Score
+```
+
+---
+
 ## Testing
 
 ```bash
