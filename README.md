@@ -57,14 +57,14 @@ streamlit run engagement_app.py
 
 ## Tech Stack
 
-| Component           | Technology            |
-|---------------------|-----------------------|
-| Face Detection      | MediaPipe             |
-| Emotion Recognition | PyTorch + EmotiEffLib |
-| Video Processing    | OpenCV                |
-| Backend             | FastAPI + WebSocket   |
-| Frontend            | Streamlit             |
-| Caching/Temp Storage | Redis                |
+| Component            | Technology            |
+|----------------------|-----------------------|
+| Face Detection       | MediaPipe             |
+| Emotion Recognition  | PyTorch + EmotiEffLib |
+| Video Processing     | OpenCV                |
+| Backend              | FastAPI + WebSocket   |
+| Frontend             | Streamlit             |
+| Caching/Temp Storage | Redis                 |
 
 ---
 
