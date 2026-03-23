@@ -120,6 +120,9 @@ if "timestamps" not in st.session_state:
 if "frame_count" not in st.session_state:
     st.session_state.frame_count = 0
 
+if "chart_update_count" not in st.session_state:
+    st.session_state.chart_update_count = 0
+
 HEALTH_CHECK_INTERVAL = 10.0  # Интервал проверки доступности бэкенда (секунды)
 
 
@@ -286,20 +289,18 @@ def create_webcam_section():
                     st.session_state.webcam_running = False
                     st.rerun()
 
-        # Текущая эмоция и метрики
+        # Текущие метрики
         st.markdown("---")
         st.markdown("#### 📊 Текущие показатели")
 
-        emotion_metric = st.empty()
-        engagement_metric = st.empty()
-        engagement_components_metric = st.empty()
-
-        # Метрики положения головы в реальном времени
-        metrics_container = st.container()
-        with metrics_container:
-            pitch_metric = st.empty()
-            yaw_metric = st.empty()
-            roll_metric = st.empty()
+        # Частные engagement по компонентам (в строку, рамочки)
+        comp_cols = st.columns(3)
+        comp_eye_metric = comp_cols[0].empty()
+        comp_hpe_metric = comp_cols[1].empty()
+        comp_emo_metric = comp_cols[2].empty()
+        engagement_metric = st.empty()              # Общий engagement
+        emotion_metric = st.empty()                 # Эмоция
+        head_pose_metric = st.empty()               # Углы HPE в одну строку
 
     with right_col:
         st.markdown("#### 📈 Аналитика в реальном времени")
@@ -398,65 +399,90 @@ def create_webcam_section():
                     if results:
                         result = results[0]  # Первое обнаруженное лицо
 
+                        # Частные engagement по компонентам (attention_state)
+                        engagement = result.get("engagement")
+                        ear = result.get("ear")
+                        hp = result.get("head_pose")
+
+                        if engagement:
+                            components = engagement.get("components")
+
+                            # Eye (EAR) компонент
+                            if ear and ear.get("attention_state"):
+                                eye_s = components.get("eye_score", 0) if components else 0
+                                comp_eye_metric.info(
+                                    f"**Eye:** {ear['attention_state']} ({eye_s:.2f})"
+                                )
+                            else:
+                                comp_eye_metric.empty()
+
+                            # HPE компонент
+                            if hp and hp.get("attention_state"):
+                                hp_s = components.get("head_pose_score", 0) if components else 0
+                                comp_hpe_metric.info(
+                                    f"**HPE:** {hp['attention_state']} ({hp_s:.2f})"
+                                )
+                            else:
+                                comp_hpe_metric.empty()
+
+                            # Emotion компонент
+                            if components:
+                                emo_s = components.get("emotion_score", 0)
+                                comp_emo_metric.info(
+                                    f"**Emo:** {emo_s:.2f}"
+                                )
+                            else:
+                                comp_emo_metric.empty()
+
+                            # Общий engagement
+                            level = engagement.get("level", "—")
+                            score = engagement.get("score", 0)
+                            trend = engagement.get("trend", "stable")
+                            trend_icon = {
+                                "rising": "↑", "falling": "↓", "stable": "→"
+                            }.get(trend, "")
+                            engagement_metric.success(
+                                f"**Вовлечённость:** {level} ({score:.0%}) {trend_icon}"
+                            )
+                        else:
+                            comp_eye_metric.empty()
+                            comp_hpe_metric.empty()
+                            comp_emo_metric.empty()
+                            engagement_metric.empty()
+
                         # Эмоция
                         emotion_metric.info(
                             f"**{result.get('emotion', '—')}** "
                             f"(уверенность: {result.get('confidence', 0):.2f})"
                         )
-                        st.session_state.emotion_history.append(result.get("emotion", "unknown"))
+                        st.session_state.emotion_history.append(
+                            result.get("emotion", "unknown")
+                        )
 
-                        # Вовлечённость
-                        engagement = result.get("engagement")
-                        if engagement:
-                            level = engagement.get("level", "—")
-                            score = engagement.get("score", 0)
-                            trend = engagement.get("trend", "stable")
-                            trend_icon = {"rising": "↑", "falling": "↓", "stable": "→"}.get(trend, "")
-                            engagement_metric.success(
-                                f"**Вовлечённость:** {level} ({score:.0%}) {trend_icon}"
+                        # Углы HPE в одну строку
+                        if hp:
+                            pitch = hp.get("pitch", 0)
+                            yaw = hp.get("yaw", 0)
+                            roll = hp.get("roll", 0)
+                            head_pose_metric.caption(
+                                f"P: {pitch:.1f}° · Y: {yaw:.1f}° · R: {roll:.1f}°"
                             )
-
-                            # Компоненты вовлечённости
-                            components = engagement.get("components")
-                            if components:
-                                emo_s = components.get("emotion_score", 0)
-                                eye_s = components.get("eye_score", 0)
-                                hp_s = components.get("head_pose_score", 0)
-                                engagement_components_metric.caption(
-                                    f"Emotion: {emo_s:.0%} · Eye: {eye_s:.0%} · HeadPose: {hp_s:.0%}"
-                                )
-                            else:
-                                engagement_components_metric.empty()
+                            st.session_state.head_pose_history["pitch"].append(pitch)
+                            st.session_state.head_pose_history["yaw"].append(yaw)
+                            st.session_state.head_pose_history["roll"].append(roll)
                         else:
-                            engagement_metric.empty()
-                            engagement_components_metric.empty()
+                            head_pose_metric.caption("P: — · Y: — · R: —")
 
-                        # Положение головы
-                        if result.get("head_pose"):
-                            hp = result["head_pose"]
-                            pitch_metric.metric("Pitch", f"{hp.get('pitch', 0):.1f}°")
-                            yaw_metric.metric("Yaw", f"{hp.get('yaw', 0):.1f}°")
-                            roll_metric.metric("Roll", f"{hp.get('roll', 0):.1f}°")
-
-                            st.session_state.head_pose_history["pitch"].append(hp.get("pitch", 0))
-                            st.session_state.head_pose_history["yaw"].append(hp.get("yaw", 0))
-                            st.session_state.head_pose_history["roll"].append(hp.get("roll", 0))
-                        else:
-                            pitch_metric.metric("Pitch", "—")
-                            yaw_metric.metric("Yaw", "—")
-                            roll_metric.metric("Roll", "—")
-
-                        # EAR
-                        ear = result.get("ear")
+                        # EAR (история для графика)
                         if ear and ear.get("avg_ear") is not None:
                             st.session_state.ear_history.append(ear["avg_ear"])
                     else:
-                        emotion_metric.warning("Лицо не обнаружено")
+                        comp_eye_metric.empty()
+                        comp_hpe_metric.empty()
+                        comp_emo_metric.empty()
                         engagement_metric.empty()
-                        engagement_components_metric.empty()
-                        pitch_metric.metric("Pitch", "—")
-                        yaw_metric.metric("Yaw", "—")
-                        roll_metric.metric("Roll", "—")
+                        emotion_metric.warning("Лицо не обнаружено")
+                        head_pose_metric.caption("P: — · Y: — · R: —")
 
                     # Обновление графиков с фиксированной частотой
                     if st.session_state.frame_count % CHART_UPDATE_INTERVAL == 0:
