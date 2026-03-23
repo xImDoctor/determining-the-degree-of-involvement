@@ -277,6 +277,7 @@ def create_webcam_section():
             if not st.session_state.webcam_running:
                 if st.button("▶️ Запустить", width="stretch"):
                     st.session_state.webcam_running = True
+                    st.session_state.needs_reset = True
                     st.rerun()
 
         with col2:
@@ -308,6 +309,28 @@ def create_webcam_section():
         pose_placeholder = st.empty()
         ear_placeholder = st.empty()
 
+        # Отрисовка последних данных (сохраняет графики после остановки камеры)
+        if not st.session_state.webcam_running:
+            pie_fig = create_emotion_pie_chart(st.session_state.emotion_history)
+            if pie_fig:
+                pie_placeholder.plotly_chart(pie_fig)
+
+            pose_fig = create_head_pose_chart(
+                st.session_state.timestamps,
+                st.session_state.head_pose_history["pitch"],
+                st.session_state.head_pose_history["yaw"],
+                st.session_state.head_pose_history["roll"],
+            )
+            if pose_fig:
+                pose_placeholder.plotly_chart(pose_fig)
+
+            ear_fig = create_ear_chart(
+                st.session_state.timestamps,
+                st.session_state.ear_history,
+            )
+            if ear_fig:
+                ear_placeholder.plotly_chart(ear_fig)
+
     # Запуск веб-камеры
     if st.session_state.webcam_running:
         cap = cv2.VideoCapture(0)
@@ -332,6 +355,17 @@ def create_webcam_section():
                     return
 
             try:
+                # Очистка истории графиков при новом запуске
+                if st.session_state.get("needs_reset", False):
+                    st.session_state.emotion_history.clear()
+                    st.session_state.head_pose_history["pitch"].clear()
+                    st.session_state.head_pose_history["yaw"].clear()
+                    st.session_state.head_pose_history["roll"].clear()
+                    st.session_state.ear_history.clear()
+                    st.session_state.timestamps.clear()
+                    st.session_state.frame_count = 0
+                    st.session_state.needs_reset = False
+
                 start_time = current_time()
 
                 while st.session_state.webcam_running:
@@ -430,9 +464,8 @@ def create_webcam_section():
                             st.session_state.emotion_history
                         )
                         if pie_fig:
-                            pie_placeholder.plotly_chart(
-                                pie_fig, use_container_width=True
-                            )
+                            pie_placeholder.empty()
+                            pie_placeholder.plotly_chart(pie_fig)
 
                         pose_fig = create_head_pose_chart(
                             st.session_state.timestamps,
@@ -441,18 +474,16 @@ def create_webcam_section():
                             st.session_state.head_pose_history["roll"],
                         )
                         if pose_fig:
-                            pose_placeholder.plotly_chart(
-                                pose_fig, use_container_width=True
-                            )
+                            pose_placeholder.empty()
+                            pose_placeholder.plotly_chart(pose_fig)
 
                         ear_fig = create_ear_chart(
                             st.session_state.timestamps,
                             st.session_state.ear_history,
                         )
                         if ear_fig:
-                            ear_placeholder.plotly_chart(
-                                ear_fig, use_container_width=True
-                            )
+                            ear_placeholder.empty()
+                            ear_placeholder.plotly_chart(ear_fig)
 
             except Exception as e:
                 st.error(f"Ошибка: {e}")
