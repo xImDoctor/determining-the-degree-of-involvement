@@ -302,7 +302,7 @@
             if (clients.length === 0) {
                 clientsList.textContent = 'No clients in room';
             } else {
-                const clientText = clients.map(c => `Name: ${c[0]}, ID: ${c[1]}`).join('\n');
+                const clientText = clients.map(c => `Name: ${c['name']}, ID: ${c['id_']}`).join('\n');
                 clientsList.textContent = clientText;
             }
             updateStatus('Clients loaded', 'connected');
