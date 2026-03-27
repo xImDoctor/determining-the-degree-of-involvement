@@ -124,6 +124,7 @@ if "chart_update_count" not in st.session_state:
     st.session_state.chart_update_count = 0
 
 HEALTH_CHECK_INTERVAL = 10.0  # Интервал проверки доступности бэкенда (секунды)
+CHART_UPDATE_INTERVAL = 15    # Интервал обновления графиков (в кадрах)
 
 
 def check_backend_health() -> bool:
@@ -232,12 +233,6 @@ def create_ear_chart(timestamps, ear_history):
     return fig
 
 
-# ============================================
-# КОНСТАНТА: интервал обновления графиков (в кадрах)
-# ============================================
-
-CHART_UPDATE_INTERVAL = 15  # Обновление графиков каждые N кадров
-
 
 # ============================================
 # ОСНОВНОЙ ИНТЕРФЕЙС
@@ -314,7 +309,7 @@ def create_webcam_section():
         if not st.session_state.webcam_running:
             pie_fig = create_emotion_pie_chart(st.session_state.emotion_history)
             if pie_fig:
-                pie_placeholder.plotly_chart(pie_fig)
+                pie_placeholder.plotly_chart(pie_fig, key="pie_stopped")
 
             pose_fig = create_head_pose_chart(
                 st.session_state.timestamps,
@@ -323,14 +318,14 @@ def create_webcam_section():
                 st.session_state.head_pose_history["roll"],
             )
             if pose_fig:
-                pose_placeholder.plotly_chart(pose_fig)
+                pose_placeholder.plotly_chart(pose_fig, key="pose_stopped")
 
             ear_fig = create_ear_chart(
                 st.session_state.timestamps,
                 st.session_state.ear_history,
             )
             if ear_fig:
-                ear_placeholder.plotly_chart(ear_fig)
+                ear_placeholder.plotly_chart(ear_fig, key="ear_stopped")
 
     # Запуск веб-камеры
     if st.session_state.webcam_running:
@@ -406,11 +401,11 @@ def create_webcam_section():
                         hp = result.get("head_pose")
 
                         if engagement:
-                            components = engagement.get("components")
+                            components = engagement.get("components") or {}
 
                             # Eye (EAR) компонент
                             if ear and ear.get("attention_state"):
-                                eye_s = components.get("eye_score", 0) if components else 0
+                                eye_s = components.get("eye_score", 0)
                                 comp_eye_metric.info(
                                     f"**Eye:** {ear['attention_state']} ({eye_s:.2f})"
                                 )
@@ -419,7 +414,7 @@ def create_webcam_section():
 
                             # HPE компонент
                             if hp and hp.get("attention_state"):
-                                hp_s = components.get("head_pose_score", 0) if components else 0
+                                hp_s = components.get("head_pose_score", 0)
                                 comp_hpe_metric.info(
                                     f"**HPE:** {hp['attention_state']} ({hp_s:.2f})"
                                 )
@@ -427,11 +422,9 @@ def create_webcam_section():
                                 comp_hpe_metric.empty()
 
                             # Emotion компонент
-                            if components:
-                                emo_s = components.get("emotion_score", 0)
-                                comp_emo_metric.info(
-                                    f"**Emo:** {emo_s:.2f}"
-                                )
+                            emo_s = components.get("emotion_score", 0)
+                            if emo_s:
+                                comp_emo_metric.info(f"**Emo:** {emo_s:.2f}")
                             else:
                                 comp_emo_metric.empty()
 
