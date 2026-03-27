@@ -38,7 +38,7 @@ class FaceAnalysisPipeline:
     _COLOR_EMOTION = (255, 0, 255)    # Magenta
     _COLOR_EAR = (0, 255, 200)        # Бирюзовый
     _COLOR_BLINK = (0, 0, 255)        # Красный
-    _COLOR_HEAD_POSE = (255, 200, 0)  # Голубой (светлый, читаемый)
+    _COLOR_HEAD_POSE = (255, 200, 0)  # Голубой
     _COLOR_ENGAGEMENT = (0, 255, 0)   # Зелёный
 
     def __init__(
