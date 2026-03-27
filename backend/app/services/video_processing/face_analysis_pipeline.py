@@ -33,6 +33,14 @@ class FaceAnalyzeResult:
 class FaceAnalysisPipeline:
     """Пайплайн для комплексного анализа лица (детекция + эмоции + EAR + HeadPose)"""
 
+    # Цвета аннотаций (BGR)
+    _COLOR_BBOX = (255, 0, 255)       # Magenta
+    _COLOR_EMOTION = (255, 0, 255)    # Magenta
+    _COLOR_EAR = (0, 255, 200)        # Бирюзовый
+    _COLOR_BLINK = (0, 0, 255)        # Красный
+    _COLOR_HEAD_POSE = (255, 200, 0)  # Голубой (светлый, читаемый)
+    _COLOR_ENGAGEMENT = (0, 255, 0)   # Зелёный
+
     def __init__(
         self,
         face_detector: FaceDetector,
@@ -195,36 +203,28 @@ class FaceAnalysisPipeline:
 
         return FaceAnalyzeResult(vis_image, results)
 
-    @staticmethod
-    def _draw_face_info(image: cv2.typing.MatLike, result: OneFaceMetricsAnalyzeResult):
+    @classmethod
+    def _draw_face_info(cls, image: cv2.typing.MatLike, result: OneFaceMetricsAnalyzeResult):
         """Отрисовывает информацию о лице на изображении"""
         x1, y1, x2, y2 = result.bbox
 
-        # Цвета (BGR)
-        color_bbox = (255, 0, 255)  # Magenta
-        color_emotion = (255, 0, 255)  # Magenta
-        color_ear = (0, 255, 200)  # Бирюзовый
-        color_blink = (0, 0, 255)  # Красный
-        color_head_pose = (255, 200, 0)  # Голубой (светлый, читаемый)
-        color_engagement = (0, 255, 0)  # Зелёный
-
         # Рисуем bbox
-        cv2.rectangle(image, (x1, y1), (x2, y2), color_bbox, 2)
+        cv2.rectangle(image, (x1, y1), (x2, y2), cls._COLOR_BBOX, 2)
 
         # Эмоция
         emotion_text = f"{result.emotion}: {result.confidence:.2f}"
-        cv2.putText(image, emotion_text, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color_emotion, 2)
+        cv2.putText(image, emotion_text, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, cls._COLOR_EMOTION, 2)
 
         # EAR (если доступен)
         y_offset = y1 - 30
         if result.ear:
             ear_text = f"EAR: {result.ear.avg_ear:.3f} [{result.ear.attention_state}]"
-            cv2.putText(image, ear_text, (x1, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.4, color_ear, 1)
+            cv2.putText(image, ear_text, (x1, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.4, cls._COLOR_EAR, 1)
             y_offset -= 15
 
             if result.ear.is_blinking:
                 blink_text = "BLINK"
-                cv2.putText(image, blink_text, (x1, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.4, color_blink, 1)
+                cv2.putText(image, blink_text, (x1, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.4, cls._COLOR_BLINK, 1)
                 y_offset -= 15
 
         # HeadPose (если доступен)
@@ -233,7 +233,7 @@ class FaceAnalysisPipeline:
             yaw = result.head_pose.yaw
             roll = result.head_pose.roll
             hp_text = f"P:{pitch:.0f} Y:{yaw:.0f} R:{roll:.0f} [{result.head_pose.attention_state}]"
-            cv2.putText(image, hp_text, (x1, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.4, color_head_pose, 1)
+            cv2.putText(image, hp_text, (x1, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.4, cls._COLOR_HEAD_POSE, 1)
             y_offset -= 15
 
         # Получение результирующего engagement, если метрика доступна
@@ -241,7 +241,7 @@ class FaceAnalysisPipeline:
             score = result.engagement.score
             level = result.engagement.level
             engagement_text = f"Eng: {score:.2f} ({level})"
-            cv2.putText(image, engagement_text, (x1, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.4, color_engagement, 1)
+            cv2.putText(image, engagement_text, (x1, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.4, cls._COLOR_ENGAGEMENT, 1)
 
 
 def make_face_analysis_pipeline() -> FaceAnalysisPipeline:
