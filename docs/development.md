@@ -114,10 +114,4 @@ streamlit run engagement_app.py
 
 ## Переменные окружения
 
-| Переменная             | По умолчанию                                 | Описание      |
-|------------------------|----------------------------------------------|---------------|
-| `REDIS_HOST`           | localhost                                    | Хост Redis    |
-| `REDIS_PORT`           | 6379                                         | Порт Redis    |
-| `REDIS_PASSWORD`       | (пусто)                                      | Пароль Redis  |
-| `CORS_ALLOWED_ORIGINS` | http://localhost:8501,http://localhost:63342 | CORS          |
-| `EMOTION_DEVICE`       | auto                                         | cpu/cuda/auto |
+См. [environment-variables.md](environment-variables.md).

@@ -5,9 +5,10 @@
 1. [Архитектура системы](architecture.md)
 2. [Разработка](development.md)
 3. [Развёртывание бэкенда](deployment.md)
-4. [API формат данных](api-format.md)
-5. [Подключение фронтенда](frontend-integration.md)
-6. [OpenAPI спецификация](openapi.yaml)
+4. [Переменные окружения](environment-variables.md)
+5. [API формат данных](api-format.md)
+6. [Подключение фронтенда](frontend-integration.md)
+7. [OpenAPI спецификация](openapi.yaml)
 
 ---
 
