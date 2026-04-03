@@ -74,17 +74,6 @@ class EmotionRecognizer:
         self._validate_confidence_threshold(actual_confidence)
         self._validate_ambiguity_threshold(actual_ambiguity)
 
-        self.emotion_labels = [
-            "Angry",
-            "Disgust",
-            "Fear",
-            "Happy",
-            "Sad",
-            "Surprise",
-            "Neutral",
-            "Contempt",
-        ]
-
         # Параметры сглаживания
         self.history: deque[dict[str, float | str]] = deque(maxlen=actual_window_size)
 
