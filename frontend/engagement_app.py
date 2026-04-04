@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from collections import deque
 from time import time as current_time
 
@@ -6,8 +7,11 @@ import cv2
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
+from dotenv import load_dotenv
 
 from api_client import EngagementAPIClient
+
+load_dotenv(Path(__file__).parent.parent / '.env')
 
 APP_TITLE = "Распознавание эмоций в реальном времени"
 APP_ICON = "🎭"
@@ -225,7 +229,7 @@ def create_ear_chart(timestamps, ear_history):
         showlegend=False,
     )
 
-    fig.add_hline(y=0.25, line_dash="dash", line_color="red", opacity=0.5)
+    fig.add_hline(y=float(os.getenv('EAR_THRESHOLD', '0.25')), line_dash="dash", line_color="red", opacity=0.5)
     fig.add_annotation(
         x=0.5, y=0.27, text="Порог закрытия", showarrow=False, xref="paper", yref="y", font=dict(size=10)
     )

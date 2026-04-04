@@ -5,3 +5,4 @@ plotly
 websocket-client
 requests
 Pillow
+python-dotenv
