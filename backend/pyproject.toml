@@ -22,7 +22,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["httpx", "pytest", "pytest-asyncio"]
+dev = ["httpx", "pytest", "pytest-asyncio", "ruff", "mypy"]
 
 [tool.ruff]
 target-version = "py312"
