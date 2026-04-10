@@ -118,3 +118,43 @@ backend/
 ```bash
 pytest
 ```
+
+## GitHub Actions CI/CD
+
+The project includes GitHub Actions workflows for continuous integration and deployment:
+
+### Workflows
+
+1. **CI/CD Pipeline** (`.github/workflows/ci-cd.yml`):
+   - Runs tests, linting, type checking on push to main/develop and pull requests
+   - Builds and pushes Docker images to GitHub Container Registry (GHCR) on push to main or version tags (v*)
+   - Docker images are only built/pushed after successful test completion
+
+### Local Development with Docker Compose
+
+To use the pre-built images from GHCR:
+
+```bash
+# Set your GitHub username (lowercase) as owner
+export GHCR_REPOSITORY_OWNER=your_github_username  # or edit .env
+
+# Start the stack
+docker-compose up
+```
+
+For local development without GHCR, you can override the image fields in docker-compose.yaml to build from source.
+
+### Manual Docker Build and Push
+
+```bash
+# Login to GHCR
+echo $GHCR_TOKEN | docker login ghcr.io -u $GHCR_USERNAME --password-stdin
+
+# Build and push backend
+docker build -t ghcr.io/your_github_username/engagement-detection-backend:latest backend
+docker push ghcr.io/your_github_username/engagement-detection-backend:latest
+
+# Build and push frontend
+docker build -t ghcr.io/your_github_username/engagement-detection-frontend:latest frontend
+docker push ghcr.io/your_github_username/engagement-detection-frontend:latest
+```

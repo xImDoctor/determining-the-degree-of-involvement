@@ -21,6 +21,10 @@ cp .env.example .env  # Edit .env for configuration
 ### Docker Compose (Recommended)
 
 ```bash
+# Use images from ghcr
+docker compose up -d
+
+# Build images from source
 docker compose up -d --build
 ```
 
