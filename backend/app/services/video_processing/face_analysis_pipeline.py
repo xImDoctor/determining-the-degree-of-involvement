@@ -34,12 +34,12 @@ class FaceAnalysisPipeline:
     """Пайплайн для комплексного анализа лица (детекция + эмоции + EAR + HeadPose)"""
 
     # Цвета аннотаций (BGR)
-    _COLOR_BBOX = (255, 0, 255)       # Magenta
-    _COLOR_EMOTION = (255, 0, 255)    # Magenta
-    _COLOR_EAR = (0, 255, 200)        # Бирюзовый
-    _COLOR_BLINK = (0, 0, 255)        # Красный
+    _COLOR_BBOX = (255, 0, 255)  # Magenta
+    _COLOR_EMOTION = (255, 0, 255)  # Magenta
+    _COLOR_EAR = (0, 255, 200)  # Бирюзовый
+    _COLOR_BLINK = (0, 0, 255)  # Красный
     _COLOR_HEAD_POSE = (255, 200, 0)  # Голубой
-    _COLOR_ENGAGEMENT = (0, 255, 0)   # Зелёный
+    _COLOR_ENGAGEMENT = (0, 255, 0)  # Зелёный
 
     def __init__(
         self,
