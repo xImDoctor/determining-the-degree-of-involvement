@@ -126,7 +126,7 @@ The project includes GitHub Actions workflows for continuous integration and dep
 ### Workflows
 
 1. **CI/CD Pipeline** (`.github/workflows/ci-cd.yml`):
-   - Runs tests, linting, type checking on push to main/develop and pull requests
+   - Runs tests, linting, type checking on push to main and pull requests
    - Builds and pushes Docker images to GitHub Container Registry (GHCR) on push to main or version tags (v*)
    - Docker images are only built/pushed after successful test completion
 
