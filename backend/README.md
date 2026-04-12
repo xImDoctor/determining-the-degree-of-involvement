@@ -139,7 +139,7 @@ To use the pre-built images from GHCR:
 export GHCR_REPOSITORY_OWNER=your_github_username  # or edit .env
 
 # Start the stack
-docker-compose up
+docker compose up
 ```
 
 For local development without GHCR, you can override the image fields in docker-compose.yaml to build from source.
@@ -153,8 +153,4 @@ echo $GHCR_TOKEN | docker login ghcr.io -u $GHCR_USERNAME --password-stdin
 # Build and push backend
 docker build -t ghcr.io/your_github_username/engagement-detection-backend:latest backend
 docker push ghcr.io/your_github_username/engagement-detection-backend:latest
-
-# Build and push frontend
-docker build -t ghcr.io/your_github_username/engagement-detection-frontend:latest frontend
-docker push ghcr.io/your_github_username/engagement-detection-frontend:latest
 ```

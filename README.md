@@ -39,6 +39,8 @@ cp .env.example .env  # Edit .env for configuration
 ### Docker Compose (Recommended)
 
 ```bash
+# Backend only, frontend needs to be run manually
+
 # Use images from ghcr
 docker compose up -d
 
