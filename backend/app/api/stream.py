@@ -94,9 +94,7 @@ async def stream(
                 img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
             except (ValueError, TypeError, error) as e:
                 logger.warning(f"Failed to decode image from client {client.id_}: {e}")
-                await websocket.send_json(
-                    ErrorResponse(error=f"Failed to decode image: {str(e)}").model_dump()
-                )
+                await websocket.send_json(ErrorResponse(error=f"Failed to decode image: {str(e)}").model_dump())
                 continue
             if img is None:
                 logger.warning("Could not decode img in /ws/rooms/{room_id}/stream")
@@ -173,9 +171,7 @@ async def client_stream(
                 frame_data = await room_service.get_frame_raw(client)
             except RedisConnectionError:
                 logger.error(f"Redis unavailable in output stream for client {client_id} in room {room_id}")
-                await websocket.send_json(
-                    ErrorResponse(error="Redis unavailable, try again later").model_dump()
-                )
+                await websocket.send_json(ErrorResponse(error="Redis unavailable, try again later").model_dump())
                 await websocket.close(status.WS_1011_INTERNAL_ERROR)
                 return
 

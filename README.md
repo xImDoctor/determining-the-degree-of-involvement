@@ -1,10 +1,28 @@
 # Real-time Engagement Detection System
 
-[![Python 3.12+](https://img.shields.io/badge/Python-3.12+-blue.svg)](https://www.python.org/)
-[![Docker](https://img.shields.io/badge/Docker-ready-blue.svg)](https://docker.com/)
 ![Version](https://img.shields.io/badge/Version-1.0.0--beta-blue.svg)
-[![SemVer](https://img.shields.io/badge/SemVer-2.0.0-blue.svg)](https://semver.org/)
 [![License: XXX](https://img.shields.io/badge/License-XXX-green.svg)](LICENSE)
+[![Python 3.12+](https://img.shields.io/badge/Python-3.12+-blue.svg)](https://www.python.org/)
+[![CI/CD](https://github.com/FunnyValentain/determining-the-degree-of-involvement/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/FunnyValentain/determining-the-degree-of-involvement/actions/workflows/ci-cd.yml)
+
+![Ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)
+![Mypy](https://img.shields.io/badge/mypy-checked-blue)
+![Pytest](https://img.shields.io/badge/py-test-blue?logo=pytest)
+
+![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=for-the-badge&logo=PyTorch&logoColor=white)
+![OpenCV](https://img.shields.io/badge/OpenCV-%23white.svg?style=for-the-badge&logo=opencv&logoColor=white)
+![MediaPipe](https://img.shields.io/badge/MediaPipe-%23white.svg?style=for-the-badge&logo=mediapipe&logoColor=white)
+![NumPy](https://img.shields.io/badge/numpy-%23013243.svg?style=for-the-badge&logo=numpy&logoColor=white)
+
+![FastAPI](https://img.shields.io/badge/FastAPI-%23005571?style=for-the-badge&logo=fastapi)
+![Pydantic](https://img.shields.io/badge/pydantic-%23E92063.svg?style=for-the-badge&logo=pydantic&logoColor=white)
+![Streamlit](https://img.shields.io/badge/Streamlit-%23FF4B4B.svg?style=for-the-badge&logo=Streamlit&logoColor=white)
+![Redis](https://img.shields.io/badge/redis-%23DD0031.svg?style=for-the-badge&logo=redis&logoColor=white)
+
+![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/github%20actions-%232671E5.svg?style=for-the-badge&logo=githubactions&logoColor=white)
+![Bash Script](https://img.shields.io/badge/bash_script-%23121011.svg?style=for-the-badge&logo=gnu-bash&logoColor=white)
+
 
 Real-time facial emotion recognition system with attention tracking. Detects emotions, blinks, and head pose to analyze user engagement through webcam or video upload.
 
@@ -21,6 +39,12 @@ cp .env.example .env  # Edit .env for configuration
 ### Docker Compose (Recommended)
 
 ```bash
+# Backend only, frontend needs to be run manually
+
+# Use images from ghcr
+docker compose up -d
+
+# Build images from source
 docker compose up -d --build
 ```
 
