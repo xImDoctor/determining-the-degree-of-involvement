@@ -27,11 +27,11 @@ HEAD_POSE_LANDMARKS = [1, 33, 61, 199, 263, 291]
 MODEL_POINTS_3D = np.array(
     [
         (0.0, 0.0, 0.0),  # Nose tip
-        (225.0, 170.0, 135.0),  # Left eye corner
-        (150.0, -150.0, 125.0),  # Left mouth corner
-        (0.0, -330.0, 65.0),  # Chin
-        (-225.0, 170.0, 135.0),  # Right eye corner
-        (-150.0, -150.0, 125.0),  # Right mouth corner
+        (-225.0, -170.0, 135.0),  # Left eye corner
+        (-150.0, 150.0, 125.0),  # Left mouth corner
+        (0.0, 330.0, 65.0),  # Chin
+        (225.0, -170.0, 135.0),  # Right eye corner
+        (150.0, 150.0, 125.0),  # Right mouth corner
     ],
     dtype=np.float64,
 )
@@ -68,18 +68,23 @@ class HeadPoseEstimator:
             - roll: наклон головы к плечу (положительный: вправо)
         """
 
-        # Формулы для преобразования матрицы поворота в углы Эйлера
-        x = math.atan2(rotation_matrix[2, 1], rotation_matrix[2, 2])
-        y = math.atan2(
-            -rotation_matrix[2, 0],
-            math.sqrt(rotation_matrix[0, 0] ** 2 + rotation_matrix[1, 0] ** 2),
-        )
-        z = math.atan2(rotation_matrix[1, 0], rotation_matrix[0, 0])
+        # Разложение матрицы на углы
+        angles, _, _, _, _, _ = cv2.RQDecomp3x3(rotation_matrix)
 
-        # Конвертация радиан в градусы
-        pitch = x * 180.0 / math.pi
-        yaw = y * 180.0 / math.pi
-        roll = z * 180.0 / math.pi
+        # В стандартной системе координат OpenCV после декомпозиции:
+        # angles[0] - Pitch (X)
+        # angles[1] - Yaw (Y)
+        # angles[2] - Roll (Z)
+
+        pitch = angles[0]
+        yaw = angles[1]
+        roll = angles[2]
+
+        if abs(roll) > 100:  # roll иногда перескакивает к +- 180
+            if roll < 0:
+                roll = roll + 180
+            else:
+                roll = roll - 180
 
         return pitch, yaw, roll
 
