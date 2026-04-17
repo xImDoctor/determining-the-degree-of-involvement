@@ -4,7 +4,6 @@
 для расчёта метрики вовлечённости
 """
 
-import math
 from dataclasses import dataclass
 from typing import Literal
 
