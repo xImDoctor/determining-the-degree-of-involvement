@@ -136,7 +136,9 @@ class EngagementCalculator:
             Emotion score (0.0-1.0)
         """
         # Базовый вес эмоции
-        emotion_weight = self.EMOTION_WEIGHTS[emotion]  # default для unknown
+        # Для нераспознанной эмоции (например, "unknown" из пайплайна
+        # при сбое распознавателя) используется вес Neutral как нейтральный fallback
+        emotion_weight = self.EMOTION_WEIGHTS.get(emotion, self.EMOTION_WEIGHTS["Neutral"])
 
         # Учёт уверенности (confidence): если низкая, то значение снижается
         # меньше 0.55 - штраф
