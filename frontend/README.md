@@ -1,46 +1,96 @@
-# Руководство по Streamlit-фронтенду
+# Frontend — Engagement Detection
 
-Документация веб-интерфейсов системы определения вовлечённости, которая описывает, как именно ими пользоваться, какие приложения за что отвечают и какой предоставляют функционал, какие существуют ограничения.
+Streamlit application for real-time student engagement analysis (while watching educational video content), frontend of the analysis system.
 
-> Стоит отметить, что текущий фронтенд служит для демонстрации взаимодействия с бэкендом и использования его возможностей соответственно. Текущий бэкенд может быть использован и с другим, разработанным отдельно, фронтендом или встроен в отдельный сервис.
+## Structure
 
----
+```
+frontend/
+├── engagement_app.py           # Base application (webcam -> analysis)
+├── video_engagement_app.py     # Extended application (video + webcam -> analysis with video sync)
+├── api_client.py               # WebSocket client for FastAPI backend
+├── styles.css                  # UI styles
+├── components/
+│   └── video_player/           # Custom Streamlit video player component
+│       ├── __init__.py         # Python wrapper of the player
+│       └── index.html          # HTML5 player + JS (currentTime feedback)
+├── tools/
+│   └── param_testing_app.py    # Standalone monolith for system parameter experimentation
+├── pyproject.toml              # Project configuration and dependencies
+├── requirements.txt            # Dependencies for Docker
+└── Dockerfile
+```
 
-## Содержание
+## Applications
 
-1. [`engagement_app.py`](engagement-app.md) – приложение, демонстрирующее анализ вовлечённости пользователя (только захват потока веб-камеры, без синхронизации с видеопросмотром)
-2. [`video_engagement_app.py`](video-engagement-app.md) – анализ вовлечённости пользователя при просмотре видео
-3. [`tools/param_testing_app.py`](param-testing-tool.md) – утилита тюнинга параметров пайплайна
-4. [Переменные окружения и `.env`](environment.md) – настройка адресов backend и порогов отображения
-5. [Тонкости и ограничения](limitations.md) – ограничения и особенности представленного фронтенда, которые следует знать для дальнейшей работы с ним или его поддержки
+### `engagement_app.py` — Base Analysis
 
----
+Webcam captures the student's face, frames are sent to the backend via WebSocket, and results (emotions, engagement, head pose, EAR) are displayed in real time.
 
-## Обзор приложений фронтенда
+```bash
+cd frontend
+streamlit run engagement_app.py
+```
 
-| Задача | Приложение | Запуск |
-|--------|-----------|--------|
-| Анализ вовлечённости пользователя, отделённое от видеопотока (нет просмотра видео, синхронизации с ним), в реальном времени, отображение метрик и графиков | `engagement_app.py` | `streamlit run engagement_app.py` |
-| Анализ вовлечённости пользователя при просмотре видео по прямой URL-ссылке (синхронизация данных с временной шкалой ролика) | `video_engagement_app.py` | `streamlit run video_engagement_app.py` |
-| Подбор порогов EAR/HPE/эмоций без FastAPI-бэкенда (монолитный инструмент, взаимодействующий напрямую с модулями пайплайна) | `tools/param_testing_app.py` | `streamlit run tools/param_testing_app.py` |
+### `video_engagement_app.py` — Video Viewing Analysis
 
-Приложения **не запускаются одновременно** на одной камере, т.к. `cv2.VideoCapture(0)` эксклюзивен и может быть задействован только одним из них. На одном порту Streamlit тоже должен выполняться один процесс за раз.
+The student watches an educational video (by URL) while the system simultaneously analyzes engagement via webcam. Metrics are synchronized with the video timeline.
 
----
+```bash
+cd frontend
+streamlit run video_engagement_app.py
+```
 
-## Общая компоновка
+Features:
+- Video file URL input (.mp4, .webm, .ogg)
+- Custom video player with current position feedback
+- Engagement chart along the video timeline
+- CSV data export
 
-`engagement_app.py` и `video_engagement_app.py` используют общий `frontend/styles.css`, а также:
 
-- одинаковый ключ `session_state.webcam_running` и однотипное поведение кнопок "Запустить" / "Стоп";
-- общий API-клиент `frontend/api_client.py` для WebSocket-связи с backend.
+## How to start
 
-`param_testing_app.py` работает локально, без backend, и не использует `frontend/api_client.py`.
+### Option 1: Local (requires running backend)
 
----
+```bash
+cd frontend
+pip install -r requirements.txt
+streamlit run engagement_app.py
+# or
+streamlit run video_engagement_app.py
+```
 
-## Зависимости
+The backend must be available at `ws://localhost:8000`. If the backend is at a different address, configure via `.env` (recommended — see [Environment Variables](#environment-variables)) or export the variables inline:
 
-Полный список зависимостей для работы приложений представлен в `frontend/requirements.txt`.
+```bash
+BACKEND_WS_URL=ws://192.168.1.10:8000 \
+BACKEND_HTTP_URL=http://192.168.1.10:8000 \
+streamlit run video_engagement_app.py
+```
 
-`tools/param_testing_app.py` дополнительно импортирует backend-модули **напрямую** (`sys.path.append(.../backend)`) – для его работы нужен `backend/` рядом с `frontend/` и установленные ML-зависимости (см. [../backend/deployment.md](../backend/deployment.md)).
+### Option 2: Parameter Testing Tool (standalone)
+
+`param_testing_app.py` works as a monolith — it directly imports the backend ML pipeline without WebSocket. Used for experimenting with thresholds and parameters.
+
+```bash
+cd frontend
+pip install -r tools/requirements.txt
+streamlit run tools/param_testing_app.py
+```
+
+## Environment Variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `BACKEND_WS_URL` | `ws://localhost:8000` | Backend WebSocket URL |
+| `BACKEND_HTTP_URL` | `http://localhost:8000` | Backend HTTP URL (health check) |
+
+Variables are loaded via `python-dotenv` from a `.env` file in the `frontend/` directory. Copy `.env.example` to `.env` and edit values as needed:
+
+```bash
+cd frontend
+cp .env.example .env
+# edit .env
+```
+
+System environment variables take precedence over `.env` entries.
