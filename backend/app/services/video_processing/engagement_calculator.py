@@ -9,7 +9,7 @@
 from collections import deque
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Literal
 
 import numpy as np
 
@@ -139,7 +139,7 @@ class EngagementCalculator:
 
         return emotion_weight * confidence * confidence_penalty
 
-    def calculate_eye_score(self, ear_data: EyeAspectRatioAnalyzeResult, elapsed_time: Optional[float] = None) -> float:
+    def calculate_eye_score(self, ear_data: EyeAspectRatioAnalyzeResult, elapsed_time: float | None = None) -> float:
         """
         Вычисление eye_score на основе EAR и частоты моргания.
 
@@ -200,9 +200,9 @@ class EngagementCalculator:
         self,
         emotion: str,
         emotion_confidence: float,
-        ear_data: Optional[EyeAspectRatioAnalyzeResult] = None,
-        head_pose_data: Optional[HeadPoseEstimateResult] = None,
-        timestamp: Optional[datetime] = None,
+        ear_data: EyeAspectRatioAnalyzeResult | None = None,
+        head_pose_data: HeadPoseEstimateResult | None = None,
+        timestamp: datetime | None = None,
     ) -> EngagementCalculateResult:
         """
         Главная функция: вычисление engagement score
@@ -334,7 +334,7 @@ class EngagementCalculator:
         else:
             return "stable"
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """
         Получение статистики за текущую сессию
 
