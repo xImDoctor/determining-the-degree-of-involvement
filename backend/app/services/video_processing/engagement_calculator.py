@@ -1,19 +1,9 @@
 """
 Модуль расчёта метрики вовлечённости (engagement) на основе мультимодального анализа.
-Учитывает эмоции, состояние глаз (EAR), поза головы (HPE).
+Учитывает эмоции, состояние глаз (EAR), позу головы (HPE).
 
-Академическое обоснование текущего выбора весов:
-- Эмоции (42%): ρ = 0.37, максимальная корреляция с engagement [Buono et al., 2022]
-- Состояние глаз (33%): ρ = -0.36, критично для drowsiness [Dewi et al., 2022]
-- Поза головы (25%): ρ = 0.24, вспомогательный индикатор [Gupta et al., 2023]
-
-Формула:
-    Engagement = 0.42 × Emotion_Score + 0.33 × Eye_Score + 0.25 × HeadPose_Score
-
-Temporal Smoothing:
-    - Эмоции уже сглажены внутри EmotionRecognizer (15 кадров)
-    - Engagement сглаживается после вычисления (45 кадров, ~1.5 сек при 30 fps)
-    - Адаптивное окно: меньше при стабильном состоянии, больше при изменчивом
+Обоснование весов компонентов, описание модификаторов, порогов классификации
+и список научных источников подробно описаны в docs/engagement-calculation/.
 """
 
 from collections import deque
@@ -49,7 +39,7 @@ class EngagementCalculator:
     Вычисление и сглаживание метрики вовлечённости
     """
 
-    # Научно обоснованные веса компонентов
+    # Веса компонентов (см. docs/engagement-calculation/formula.md)
     WEIGHTS = {
         "emotion": 0.42,  # Лицевые эмоции / Action Units
         "eye": 0.33,  # Состояние глаз (EAR, моргания)
@@ -74,13 +64,13 @@ class EngagementCalculator:
 
     # Пороговые значения для классификации вовлечённости
     THRESHOLDS = {
-        "high": 0.75,  # >= 0.75 — High engagement
-        "medium": 0.50,  # >= 0.50 — Medium engagement
-        "low": 0.25,  # >= 0.25 — Low engagement
-        # < 0.25 — Very Low engagement
+        "high": 0.75,  # >=, тогда High
+        "medium": 0.50,  # Medium
+        "low": 0.25,  # Low
+        # < 0.25, Very Low
     }
 
-    # Веса эмоций для emotion_score (экспертная оценка)
+    # Веса эмоций для emotion_score (см. docs/engagement-calculation/component-scores.md)
     EMOTION_WEIGHTS = {
         "Happiness": 1.0,  # Позитивная вовлечённость
         "Surprise": 0.8,  # Интерес, удивление (продуктивно)
@@ -176,15 +166,15 @@ class EngagementCalculator:
             blink_rate_per_min = (blink_count / elapsed_time) * 60
 
             # Нормальная частота: 10-25 морганий/минуту
-            # Источник: Magliacano et al. (2020), Neuroscience Letters
+            # (см. docs/engagement-calculation/modifiers.md)
             if 10 <= blink_rate_per_min <= 25:
-                # Идеальная частота — бонус +10%
+                # Стандартный показатель: бонус +10%
                 blink_modifier = 1.1
             elif blink_rate_per_min < 5:
-                # Слишком редко — гиперфокус или усталость, -5%
+                # Редкое моргание: гиперфокус или усталость, -5%
                 blink_modifier = 0.95
             elif blink_rate_per_min > 30:
-                # Слишком часто — стресс/раздражение, -10%
+                # Частое моргание: стресс/раздражение, -10%
                 blink_modifier = 0.90
 
         # Итоговый eye_score (не превышает 1.0)
