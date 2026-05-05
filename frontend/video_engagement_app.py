@@ -90,6 +90,8 @@ load_css()
 
 BACKEND_WS_URL = os.getenv("BACKEND_WS_URL", "ws://localhost:8000")
 BACKEND_HTTP_URL = os.getenv("BACKEND_HTTP_URL", "http://localhost:8000")
+# Порог красной линии на графике EAR (только визуализация)
+EAR_THRESHOLD = float(os.getenv("EAR_THRESHOLD", "0.25"))
 
 if "api_client" not in st.session_state:
     st.session_state.api_client = EngagementAPIClient(
@@ -255,9 +257,15 @@ def create_ear_chart(timestamps, ear_history):
         showlegend=False,
     )
 
-    fig.add_hline(y=0.25, line_dash="dash", line_color="red", opacity=0.5)
+    fig.add_hline(y=EAR_THRESHOLD, line_dash="dash", line_color="red", opacity=0.5)
     fig.add_annotation(
-        x=0.5, y=0.27, text="Порог закрытия", showarrow=False, xref="paper", yref="y", font=dict(size=10)
+        x=0.5,
+        y=EAR_THRESHOLD + 0.02,
+        text="Порог закрытия",
+        showarrow=False,
+        xref="paper",
+        yref="y",
+        font=dict(size=10),
     )
 
     return fig
