@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass
+from datetime import datetime
 
 import cv2
 
@@ -184,6 +185,7 @@ class FaceAnalysisPipeline:
                         emotion_confidence=conf,
                         ear_data=ear,
                         head_pose_data=head_pose,
+                        timestamp=datetime.now(),
                     )
                 except Exception as e:
                     logger.error(f"Engagement calculation failed for face {face_idx}: {e}")
