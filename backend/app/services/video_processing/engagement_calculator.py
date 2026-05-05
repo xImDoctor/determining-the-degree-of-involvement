@@ -102,9 +102,8 @@ class EngagementCalculator:
         # Время начала сессии (для расчёта частоты моргания)
         self.session_start_time: datetime | None = None
 
-        # Счётчики для статистики
+        # Счётчик обработанных кадров (для статистики и frame_count в результате)
         self.frame_count = 0
-        self.total_frames_analyzed = 0
 
     def reset(self):
         """Сброс истории (для новой сессии)"""
@@ -112,7 +111,6 @@ class EngagementCalculator:
         self.trend_history.clear()
         self.session_start_time = None
         self.frame_count = 0
-        self.total_frames_analyzed = 0
 
     def calculate_emotion_score(self, emotion: str, confidence: float) -> float:
         """
@@ -273,7 +271,6 @@ class EngagementCalculator:
 
         # 7. Обновление счётчиков
         self.frame_count += 1
-        self.total_frames_analyzed += 1
 
         return EngagementCalculateResult(
             score=round(engagement_smoothed, 3),
@@ -342,7 +339,7 @@ class EngagementCalculator:
             Словарь со статистикой
         """
         if not self.engagement_history:
-            return {"mean": 0.0, "std": 0.0, "min": 0.0, "max": 0.0, "total_frames": self.total_frames_analyzed}
+            return {"mean": 0.0, "std": 0.0, "min": 0.0, "max": 0.0, "total_frames": self.frame_count}
 
         history_array = np.array(self.engagement_history)
 
@@ -351,6 +348,6 @@ class EngagementCalculator:
             "std": round(np.std(history_array), 3),
             "min": round(np.min(history_array), 3),
             "max": round(np.max(history_array), 3),
-            "total_frames": self.total_frames_analyzed,
+            "total_frames": self.frame_count,
             "current_window_size": len(self.engagement_history),
         }
