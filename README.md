@@ -84,6 +84,19 @@ streamlit run engagement_app.py
 
 ---
 
+## Documentation
+
+Detailed Russian-language project documentation lives in `docs/`. You can view it through [this navigation note](docs/README.md) or using the topic list below:
+
+| Topic | Path |
+|-------|------|
+| Backend (architecture, deployment, env, API format) | [docs/backend/](docs/backend/README.md) |
+| ML pipeline (face detection, emotion, EAR, HPE, system smoothing) | [docs/pipeline/](docs/pipeline/README.md) |
+| Engagement calculation (formula, weights, modifiers, levels, references) | [docs/engagement-calculation/](docs/engagement-calculation/README.md) |
+| Frontend (Streamlit apps, env, limitations) | [docs/frontend/](docs/frontend/README.md) |
+
+---
+
 ## Tech Stack
 
 | Component            | Technology            |
