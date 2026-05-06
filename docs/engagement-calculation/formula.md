@@ -9,7 +9,7 @@ engagement_raw = 0.42 * emotion_score  +  0.33 * eye_score  +  0.25 * head_pose_
 engagement     = clip(engagement_raw, 0, 1)
 ```
 
-Источник: [`EngagementCalculator.calculate`](../../backend/app/services/video_processing/engagement_calculator.py#L246-L254), константа `WEIGHTS` в [`engagement_calculator.py:53-57`](../../backend/app/services/video_processing/engagement_calculator.py#L53-L57).
+Источник: [`EngagementCalculator.calculate`](../../backend/app/services/video_processing/engagement_calculator.py#L266-L273), константа `WEIGHTS` в [`engagement_calculator.py:43-47`](../../backend/app/services/video_processing/engagement_calculator.py#L43-L47).
 
 После взвешенной суммы сырой score проходит через адаптивное временное сглаживание (см. [smoothing-and-trend.md](smoothing-and-trend.md)).
 
@@ -43,9 +43,9 @@ engagement     = clip(engagement_raw, 0, 1)
 - `eye_score ∈ [0, 1]` – `min(1.0, base_score * blink_modifier)`, где `base_score ∈ {0.1, 0.4, 0.7, 1.0}`.
 - `head_pose_score ∈ {0.2, 0.5, 0.8, 1.0}` – четыре дискретных уровня из `HEAD_POSE_STATE_SCORES`.
 
-`engagement_raw` теоретически лежит в `[0, 1]`, но код применяет `max(0, min(1, engagement_raw))` страховочно ([engagement_calculator.py:254](../../backend/app/services/video_processing/engagement_calculator.py#L254)).
+`engagement_raw` теоретически лежит в `[0, 1]`, но код применяет `max(0, min(1, engagement_raw))` страховочно ([engagement_calculator.py:273](../../backend/app/services/video_processing/engagement_calculator.py#L273)).
 
-`score` и `score_raw` округляются до **3 знаков после запятой** перед сериализацией ([engagement_calculator.py:287-288](../../backend/app/services/video_processing/engagement_calculator.py#L287-L288)).
+`score` и `score_raw` округляются до **3 знаков после запятой** перед сериализацией ([engagement_calculator.py:305-306](../../backend/app/services/video_processing/engagement_calculator.py#L305-L306)).
 
 ---
 
@@ -57,7 +57,7 @@ engagement     = clip(engagement_raw, 0, 1)
 > - **`EMOTION_WEIGHTS`** (релевантные): `Happiness=1.0`, `Anger=0.1`. **`confidence_threshold = 0.55`** → `confidence_penalty = 1.0` при `conf ≥ 0.55`
 > - **EAR thresholds** в [`analyze_ear.classify_attention_by_ear`](../../backend/app/services/video_processing/analyze_ear.py#L185): `alert=0.30`, `drowsy=0.20`, `very_drowsy=0.15`; на верхней ветке дополнительная развилка по `blink_count ∈ [10, 25]` (см. [../pipeline/eye-aspect-ratio.md](../pipeline/eye-aspect-ratio.md#классификация-attention_state))
 > - **`EAR_STATE_SCORES`:** `Alert=1.0`, `Normal=0.7`, `Drowsy=0.4`, `Very Drowsy=0.1`
-> - **Blink rate modifier:** `1.10` для `10 ≤ rate ≤ 25`, `0.95` при `rate < 5`, `0.90` при `rate > 30`, иначе `1.00`. Применяется только при переданном `timestamp` (иначе `elapsed_time = None` → modifier не активен)
+> - **Blink rate modifier:** `1.10` для `10 ≤ rate ≤ 25`, `0.95` при `rate < 5`, `0.90` при `rate > 30`, иначе `1.00`. В текущей версии пайплайна `timestamp=datetime.now()` передаётся автоматически и modifier активен, но при автономном вызове без `timestamp` возникает `elapsed_time = None` и значение остаётся `1.00` (модификатор не применяется)
 > - **HPE thresholds** в [`analyze_head_pose.classify_attention_state`](../../backend/app/services/video_processing/analyze_head_pose.py#L160): `Highly Attentive` при `|pitch|<10°, |yaw|<15°`; `Distracted` при `|pitch|<30°, |yaw|<40°` (полная таблица - в [../pipeline/head-pose-estimation.md](../pipeline/head-pose-estimation.md#классификация-attention_state))
 > - **`HEAD_POSE_STATE_SCORES`:** `Highly Attentive=1.0`, `Attentive=0.8`, `Distracted=0.5`, `Very Distracted=0.2`
 > - **`THRESHOLDS` engagement:** `high=0.75`, `medium=0.50`, `low=0.25`
@@ -80,7 +80,7 @@ engagement     = clip(engagement_raw, 0, 1)
 | `level` | `0.937 ≥ 0.75` | `High` |
 | `trend` | зависит от истории | `stable`/`rising` |
 
-**Вход «негативный»:** `Anger, conf=0.92`; EAR `Drowsy` (без `timestamp` → `blink_modifier = 1.0`); HPE `Distracted`.
+**Вход «негативный»** (иллюстрация автономного вызова без `timestamp` – в текущем пайплайне `timestamp` явно передаётся): `Anger, conf=0.92`; EAR `Drowsy` (без `timestamp` → `blink_modifier = 1.0`); HPE `Distracted`.
 
 | Этап | Расчёт | Значение |
 |------|--------|----------|
@@ -96,10 +96,10 @@ engagement     = clip(engagement_raw, 0, 1)
 
 ## Ограничение модели
 
-Веса `{0.42, 0.33, 0.25}` **зашиты в коде** как class-attribute:
+Веса `{0.42, 0.33, 0.25}` определены в коде как class-attribute:
 
 ```python
-# engagement_calculator.py:53-57
+# engagement_calculator.py:43-47
 WEIGHTS = {"emotion": 0.42, "eye": 0.33, "head_pose": 0.25}
 ```
 

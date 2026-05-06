@@ -10,7 +10,7 @@
 
 ## 1. Emotion score
 
-Реализация: [`calculate_emotion_score`](../../backend/app/services/video_processing/engagement_calculator.py#L127-L148).
+Реализация: [`calculate_emotion_score`](../../backend/app/services/video_processing/engagement_calculator.py#L147-L170).
 
 ```
 emotion_score = emotion_weight * confidence * confidence_penalty
@@ -18,7 +18,7 @@ emotion_score = emotion_weight * confidence * confidence_penalty
 
 ### Веса эмоций
 
-`EMOTION_WEIGHTS` ([engagement_calculator.py:84-93](../../backend/app/services/video_processing/engagement_calculator.py#L84-L93)) определены следующим образом:
+`EMOTION_WEIGHTS` ([engagement_calculator.py:51-60](../../backend/app/services/video_processing/engagement_calculator.py#L51-L60)) определены следующим образом:
 
 | Эмоция | Вес | Интерпретация |
 |--------|-----|---------------|
@@ -61,7 +61,7 @@ confidence ≥ 0.55:  penalty = 1.0                   # без штрафа
 
 ## 2. Eye score
 
-Реализация: [`calculate_eye_score`](../../backend/app/services/video_processing/engagement_calculator.py#L150-L189).
+Реализация: [`calculate_eye_score`](../../backend/app/services/video_processing/engagement_calculator.py#L172-L208).
 
 ```
 eye_score = min(1.0, base_score * blink_modifier)
@@ -69,7 +69,7 @@ eye_score = min(1.0, base_score * blink_modifier)
 
 ### Базовый score из `attention_state`
 
-`EAR_STATE_SCORES` ([engagement_calculator.py:60-65](../../backend/app/services/video_processing/engagement_calculator.py#L60-L65)):
+`EAR_STATE_SCORES` ([engagement_calculator.py:68-73](../../backend/app/services/video_processing/engagement_calculator.py#L68-L73)):
 
 | `attention_state` | Base score | Порог EAR |
 |-------------------|------------|-----------|
@@ -110,13 +110,13 @@ blink_rate_per_min = (blink_count / elapsed_time) * 60
 
 ## 3. Head pose score
 
-Реализация: [`calculate_head_pose_score`](../../backend/app/services/video_processing/engagement_calculator.py#L191-L205).
+Реализация: [`calculate_head_pose_score`](../../backend/app/services/video_processing/engagement_calculator.py#L210-L224).
 
 ```
 head_pose_score = HEAD_POSE_STATE_SCORES[attention_state]
 ```
 
-`HEAD_POSE_STATE_SCORES` ([engagement_calculator.py:68-73](../../backend/app/services/video_processing/engagement_calculator.py#L68-L73)):
+`HEAD_POSE_STATE_SCORES` ([engagement_calculator.py:93-98](../../backend/app/services/video_processing/engagement_calculator.py#L93-L98)):
 
 | `attention_state` | Score | Пороги |
 |-------------------|-------|--------|

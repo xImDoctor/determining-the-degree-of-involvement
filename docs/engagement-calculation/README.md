@@ -78,7 +78,7 @@ score          ──► threshold map      ──► level
 - `engagement_raw` при полностью отключённых EAR и HPE сводится к `0.42*emotion + 0.33*0.5 + 0.25*0.5 = 0.42*emotion + 0.29`.
 - Для `Happiness (conf=1.0)` при отключённых EAR/HPE: `0.42*1.0 + 0.29 = 0.71` – попадает в `Medium`, но близко к `High`.
 
-Поведение заложено в [`engagement_calculator.py:241, 244`](../../backend/app/services/video_processing/engagement_calculator.py#L241).
+Поведение заложено в [`engagement_calculator.py:260, 263`](../../backend/app/services/video_processing/engagement_calculator.py#L260).
 
 ---
 
@@ -88,6 +88,6 @@ score          ──► threshold map      ──► level
 - `engagement_history` (окно сглаживания)
 - `trend_history`
 - `session_start_time`
-- `frame_count`, `total_frames_analyzed`
+- `frame_count`
 
 Вызывается при начале новой сессии. В текущей WS-архитектуре сессия равносильна времени жизни одного `Client` в комнате; для каждого клиента создаётся свой экземпляр `EngagementCalculator` в handler'е WS-эндпоинта (см. [api/stream.py](../../backend/app/api/stream.py) и [architecture.md](../backend/architecture.md)).
