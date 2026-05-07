@@ -41,8 +41,8 @@ class EngagementCalculator:
 
     # Веса компонентов в итоговой формуле (см. docs/engagement-calculation/formula.md)
     WEIGHTS = {
-        "emotion": 0.42,    # лицевые эмоции
-        "eye": 0.33,        # состояние глаз (EAR, моргания)
+        "emotion": 0.42,  # лицевые эмоции
+        "eye": 0.33,  # состояние глаз (EAR, моргания)
         "head_pose": 0.25,  # ориентация головы (pitch, yaw)
     }
 
@@ -50,13 +50,13 @@ class EngagementCalculator:
     # Веса эмоций для emotion_score (см. docs/engagement-calculation/component-scores.md)
     EMOTION_WEIGHTS = {
         "Happiness": 1.0,  # позитивная вовлечённость
-        "Surprise": 0.8,   # интерес, удивление (продуктивно)
-        "Neutral": 0.6,    # спокойное внимание
-        "Contempt": 0.4,   # скептицизм (частично вовлечён)
-        "Fear": 0.3,       # беспокойство (низкая вовлечённость)
-        "Sadness": 0.2,    # грусть, усталость
-        "Anger": 0.1,      # фрустрация
-        "Disgust": 0.1,    # отвращение, отторжение
+        "Surprise": 0.8,  # интерес, удивление (продуктивно)
+        "Neutral": 0.6,  # спокойное внимание
+        "Contempt": 0.4,  # скептицизм (частично вовлечён)
+        "Fear": 0.3,  # беспокойство (низкая вовлечённость)
+        "Sadness": 0.2,  # грусть, усталость
+        "Anger": 0.1,  # фрустрация
+        "Disgust": 0.1,  # отвращение, отторжение
     }
 
     # Если уверенность ниже заданного порога, то используется
@@ -66,42 +66,42 @@ class EngagementCalculator:
     # EAR-компонент
     # Маппинг состояния глаз -> score (пороги в analyze_ear.classify_attention_by_ear)
     EAR_STATE_SCORES = {
-        "Alert": 1.0,        # avg_ear >= 0.30
-        "Normal": 0.7,       # avg_ear >= 0.25
-        "Drowsy": 0.4,       # avg_ear >= 0.20
+        "Alert": 1.0,  # avg_ear >= 0.30
+        "Normal": 0.7,  # avg_ear >= 0.25
+        "Drowsy": 0.4,  # avg_ear >= 0.20
         "Very Drowsy": 0.1,  # avg_ear < 0.20
     }
 
     # Пороги диапазонов частоты моргания (морганий/мин)
     # (см. docs/engagement-calculation/modifiers.md)
     BLINK_RATE_BANDS = {
-        "rare": 5,         # ниже – редкое моргание (гиперфокус/усталость)
+        "rare": 5,  # ниже – редкое моргание (гиперфокус/усталость)
         "normal_min": 10,  # нижняя граница нормальной частоты бодрствования
         "normal_max": 25,  # верхняя граница нормальной частоты
-        "often": 30,       # выше – частое моргание (стресс/раздражение)
+        "often": 30,  # выше – частое моргание (стресс/раздражение)
     }
 
     # Множители eye_score по диапазону BLINK_RATE_BANDS
     BLINK_RATE_MODIFIERS = {
         "normal": 1.10,  # 10-25 морг./мин: стандартная частота, +10%
-        "rare": 0.95,    # <5 морг./мин: гиперфокус/усталость, -5%
-        "often": 0.90,   # >30 морг./мин: стресс/раздражение, -10%
+        "rare": 0.95,  # <5 морг./мин: гиперфокус/усталость, -5%
+        "often": 0.90,  # >30 морг./мин: стресс/раздражение, -10%
     }
 
     # HPE-компонент
     # Маппинг позы головы -> score (пороги в analyze_head_pose.classify_attention_state)
     HEAD_POSE_STATE_SCORES = {
         "Highly Attentive": 1.0,  # |pitch| < 10, |yaw| < 15
-        "Attentive": 0.8,         # |pitch| < 20, |yaw| < 25
-        "Distracted": 0.5,        # |pitch| < 30, |yaw| < 40
-        "Very Distracted": 0.2,   # иначе
+        "Attentive": 0.8,  # |pitch| < 20, |yaw| < 25
+        "Distracted": 0.5,  # |pitch| < 30, |yaw| < 40
+        "Very Distracted": 0.2,  # иначе
     }
 
     # Классификация уровня вовлечённости
     THRESHOLDS = {
-        "high": 0.75,    # >= 0.75 -> High
+        "high": 0.75,  # >= 0.75 -> High
         "medium": 0.50,  # >= 0.50 -> Medium
-        "low": 0.25,     # >= 0.25 -> Low, < 0.25 -> Very Low
+        "low": 0.25,  # >= 0.25 -> Low, < 0.25 -> Very Low
     }
 
     # Сглаживание и тренд
@@ -282,7 +282,7 @@ class EngagementCalculator:
             engagement_smoothed = float(engagement_raw)
         else:
             # Локальная дисперсия по окну (~0.5 сек при 30 FPS)
-            recent_window = list(self.engagement_history)[-self.VARIANCE_WINDOW_SIZE:]
+            recent_window = list(self.engagement_history)[-self.VARIANCE_WINDOW_SIZE :]
             variance = float(np.var(recent_window))
 
             if variance < self.bypass_threshold:
