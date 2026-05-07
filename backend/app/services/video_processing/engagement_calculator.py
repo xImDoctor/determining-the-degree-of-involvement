@@ -1,25 +1,15 @@
 """
 Модуль расчёта метрики вовлечённости (engagement) на основе мультимодального анализа.
-Учитывает эмоции, состояние глаз (EAR), поза головы (HPE).
+Учитывает эмоции, состояние глаз (EAR), позу головы (HPE).
 
-Академическое обоснование текущего выбора весов:
-- Эмоции (42%): ρ = 0.37, максимальная корреляция с engagement [Buono et al., 2022]
-- Состояние глаз (33%): ρ = -0.36, критично для drowsiness [Dewi et al., 2022]
-- Поза головы (25%): ρ = 0.24, вспомогательный индикатор [Gupta et al., 2023]
-
-Формула:
-    Engagement = 0.42 × Emotion_Score + 0.33 × Eye_Score + 0.25 × HeadPose_Score
-
-Temporal Smoothing:
-    - Эмоции уже сглажены внутри EmotionRecognizer (15 кадров)
-    - Engagement сглаживается после вычисления (45 кадров, ~1.5 сек при 30 fps)
-    - Адаптивное окно: меньше при стабильном состоянии, больше при изменчивом
+Обоснование весов компонентов, описание модификаторов, порогов классификации
+и список научных источников подробно описаны в docs/engagement-calculation/.
 """
 
 from collections import deque
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Literal
 
 import numpy as np
 
@@ -49,14 +39,32 @@ class EngagementCalculator:
     Вычисление и сглаживание метрики вовлечённости
     """
 
-    # Научно обоснованные веса компонентов
+    # Веса компонентов в итоговой формуле (см. docs/engagement-calculation/formula.md)
     WEIGHTS = {
-        "emotion": 0.42,  # Лицевые эмоции / Action Units
-        "eye": 0.33,  # Состояние глаз (EAR, моргания)
-        "head_pose": 0.25,  # Ориентация головы (pitch, yaw)
+        "emotion": 0.42,  # лицевые эмоции
+        "eye": 0.33,  # состояние глаз (EAR, моргания)
+        "head_pose": 0.25,  # ориентация головы (pitch, yaw)
     }
 
-    # Маппинг состояния глаз → score (пороги определены в analyze_ear.classify_attention_by_ear)
+    # Emotion-компонент
+    # Веса эмоций для emotion_score (см. docs/engagement-calculation/component-scores.md)
+    EMOTION_WEIGHTS = {
+        "Happiness": 1.0,  # позитивная вовлечённость
+        "Surprise": 0.8,  # интерес, удивление (продуктивно)
+        "Neutral": 0.6,  # спокойное внимание
+        "Contempt": 0.4,  # скептицизм (частично вовлечён)
+        "Fear": 0.3,  # беспокойство (низкая вовлечённость)
+        "Sadness": 0.2,  # грусть, усталость
+        "Anger": 0.1,  # фрустрация
+        "Disgust": 0.1,  # отвращение, отторжение
+    }
+
+    # Если уверенность ниже заданного порога, то используется
+    # линейный штраф confidence / CONFIDENCE_PENALTY_THRESHOLD
+    CONFIDENCE_PENALTY_THRESHOLD = 0.55
+
+    # EAR-компонент
+    # Маппинг состояния глаз -> score (пороги в analyze_ear.classify_attention_by_ear)
     EAR_STATE_SCORES = {
         "Alert": 1.0,  # avg_ear >= 0.30
         "Normal": 0.7,  # avg_ear >= 0.25
@@ -64,7 +72,24 @@ class EngagementCalculator:
         "Very Drowsy": 0.1,  # avg_ear < 0.20
     }
 
-    # Маппинг позы головы → score (пороги определены в analyze_head_pose.classify_attention_state)
+    # Пороги диапазонов частоты моргания (морганий/мин)
+    # (см. docs/engagement-calculation/modifiers.md)
+    BLINK_RATE_BANDS = {
+        "rare": 5,  # ниже – редкое моргание (гиперфокус/усталость)
+        "normal_min": 10,  # нижняя граница нормальной частоты бодрствования
+        "normal_max": 25,  # верхняя граница нормальной частоты
+        "often": 30,  # выше – частое моргание (стресс/раздражение)
+    }
+
+    # Множители eye_score по диапазону BLINK_RATE_BANDS
+    BLINK_RATE_MODIFIERS = {
+        "normal": 1.10,  # 10-25 морг./мин: стандартная частота, +10%
+        "rare": 0.95,  # <5 морг./мин: гиперфокус/усталость, -5%
+        "often": 0.90,  # >30 морг./мин: стресс/раздражение, -10%
+    }
+
+    # HPE-компонент
+    # Маппинг позы головы -> score (пороги в analyze_head_pose.classify_attention_state)
     HEAD_POSE_STATE_SCORES = {
         "Highly Attentive": 1.0,  # |pitch| < 10, |yaw| < 15
         "Attentive": 0.8,  # |pitch| < 20, |yaw| < 25
@@ -72,25 +97,22 @@ class EngagementCalculator:
         "Very Distracted": 0.2,  # иначе
     }
 
-    # Пороговые значения для классификации вовлечённости
+    # Классификация уровня вовлечённости
     THRESHOLDS = {
-        "high": 0.75,  # >= 0.75 — High engagement
-        "medium": 0.50,  # >= 0.50 — Medium engagement
-        "low": 0.25,  # >= 0.25 — Low engagement
-        # < 0.25 — Very Low engagement
+        "high": 0.75,  # >= 0.75 -> High
+        "medium": 0.50,  # >= 0.50 -> Medium
+        "low": 0.25,  # >= 0.25 -> Low, < 0.25 -> Very Low
     }
 
-    # Веса эмоций для emotion_score (экспертная оценка)
-    EMOTION_WEIGHTS = {
-        "Happiness": 1.0,  # Позитивная вовлечённость
-        "Surprise": 0.8,  # Интерес, удивление (продуктивно)
-        "Neutral": 0.6,  # Спокойное внимание
-        "Contempt": 0.4,  # Скептицизм (частично вовлечён)
-        "Fear": 0.3,  # Беспокойство (низкая вовлечённость)
-        "Sadness": 0.2,  # Грусть, усталость
-        "Anger": 0.1,  # Фрустрация
-        "Disgust": 0.1,  # Отвращение, отторжение
-    }
+    # Сглаживание и тренд
+    # Если в истории меньше кадров, то сглаживание не запускается ("прогрев")
+    SMOOTHING_WARMUP_FRAMES = 5
+    # Размер окна для оценки локальной дисперсии (для выбора режима сглаживания)
+    VARIANCE_WINDOW_SIZE = 15
+    # Минимум кадров в trend_history до начала расчёта тренда
+    TREND_MIN_HISTORY = 10
+    # Порог разницы половин окна для классификации rising/falling тренда
+    TREND_THRESHOLD = 0.05
 
     def __init__(self, *, window_size: int = 45, bypass_threshold: float = 0.08, trend_window: int = 30):
         """
@@ -112,9 +134,8 @@ class EngagementCalculator:
         # Время начала сессии (для расчёта частоты моргания)
         self.session_start_time: datetime | None = None
 
-        # Счётчики для статистики
+        # Счётчик обработанных кадров (для статистики и frame_count в результате)
         self.frame_count = 0
-        self.total_frames_analyzed = 0
 
     def reset(self):
         """Сброс истории (для новой сессии)"""
@@ -122,7 +143,6 @@ class EngagementCalculator:
         self.trend_history.clear()
         self.session_start_time = None
         self.frame_count = 0
-        self.total_frames_analyzed = 0
 
     def calculate_emotion_score(self, emotion: str, confidence: float) -> float:
         """
@@ -136,18 +156,20 @@ class EngagementCalculator:
             Emotion score (0.0-1.0)
         """
         # Базовый вес эмоции
-        emotion_weight = self.EMOTION_WEIGHTS[emotion]  # default для unknown
+        # Для нераспознанной эмоции (например, "unknown" из пайплайна
+        # при сбое распознавателя) используется вес Neutral как нейтральный fallback
+        emotion_weight = self.EMOTION_WEIGHTS.get(emotion, self.EMOTION_WEIGHTS["Neutral"])
 
-        # Учёт уверенности (confidence): если низкая, то значение снижается
-        # меньше 0.55 - штраф
-        if confidence < 0.55:
-            confidence_penalty = confidence / 0.55  # 0.5 conf -> 0.91 penalty
+        # Учёт уверенности (confidence): если ниже CONFIDENCE_PENALTY_THRESHOLD, то
+        # применяется линейный штраф (например, 0.50/0.55 = ~0.91)
+        if confidence < self.CONFIDENCE_PENALTY_THRESHOLD:
+            confidence_penalty = confidence / self.CONFIDENCE_PENALTY_THRESHOLD
         else:
             confidence_penalty = 1.0
 
         return emotion_weight * confidence * confidence_penalty
 
-    def calculate_eye_score(self, ear_data: EyeAspectRatioAnalyzeResult, elapsed_time: Optional[float] = None) -> float:
+    def calculate_eye_score(self, ear_data: EyeAspectRatioAnalyzeResult, elapsed_time: float | None = None) -> float:
         """
         Вычисление eye_score на основе EAR и частоты моргания.
 
@@ -170,20 +192,17 @@ class EngagementCalculator:
         blink_modifier = 1.0
 
         if elapsed_time and elapsed_time > 0:
-            # Расчёт частоты моргания (морганий в минуту)
-            blink_rate_per_min = (blink_count / elapsed_time) * 60
+            # Расчёт частоты моргания в минуту (от начала сессии)
+            rate = (blink_count / elapsed_time) * 60
+            bands = self.BLINK_RATE_BANDS
+            modifiers = self.BLINK_RATE_MODIFIERS
 
-            # Нормальная частота: 10-25 морганий/минуту
-            # Источник: Magliacano et al. (2020), Neuroscience Letters
-            if 10 <= blink_rate_per_min <= 25:
-                # Идеальная частота — бонус +10%
-                blink_modifier = 1.1
-            elif blink_rate_per_min < 5:
-                # Слишком редко — гиперфокус или усталость, -5%
-                blink_modifier = 0.95
-            elif blink_rate_per_min > 30:
-                # Слишком часто — стресс/раздражение, -10%
-                blink_modifier = 0.90
+            if bands["normal_min"] <= rate <= bands["normal_max"]:
+                blink_modifier = modifiers["normal"]
+            elif rate < bands["rare"]:
+                blink_modifier = modifiers["rare"]
+            elif rate > bands["often"]:
+                blink_modifier = modifiers["often"]
 
         # Итоговый eye_score (не превышает 1.0)
         return min(1.0, base_score * blink_modifier)
@@ -208,9 +227,9 @@ class EngagementCalculator:
         self,
         emotion: str,
         emotion_confidence: float,
-        ear_data: Optional[EyeAspectRatioAnalyzeResult] = None,
-        head_pose_data: Optional[HeadPoseEstimateResult] = None,
-        timestamp: Optional[datetime] = None,
+        ear_data: EyeAspectRatioAnalyzeResult | None = None,
+        head_pose_data: HeadPoseEstimateResult | None = None,
+        timestamp: datetime | None = None,
     ) -> EngagementCalculateResult:
         """
         Главная функция: вычисление engagement score
@@ -258,12 +277,12 @@ class EngagementCalculator:
         self.trend_history.append(engagement_raw)
 
         # 4. Temporal smoothing (адаптивное окно)
-        if len(self.engagement_history) < 5:
-            # Если пока недостаточно истории, используется raw
+        if len(self.engagement_history) < self.SMOOTHING_WARMUP_FRAMES:
+            # "Прогрев": если истории пока мало, то используется значение без сглаживания (raw)
             engagement_smoothed = float(engagement_raw)
         else:
-            # Вычисление вариации на последних 15 кадрах (~0.5 сек)
-            recent_window = list(self.engagement_history)[-15:]
+            # Локальная дисперсия по окну (~0.5 сек при 30 FPS)
+            recent_window = list(self.engagement_history)[-self.VARIANCE_WINDOW_SIZE :]
             variance = float(np.var(recent_window))
 
             if variance < self.bypass_threshold:
@@ -281,7 +300,6 @@ class EngagementCalculator:
 
         # 7. Обновление счётчиков
         self.frame_count += 1
-        self.total_frames_analyzed += 1
 
         return EngagementCalculateResult(
             score=round(engagement_smoothed, 3),
@@ -322,7 +340,7 @@ class EngagementCalculator:
         Returns:
             'rising', 'falling', или 'stable'
         """
-        if len(self.trend_history) < 10:
+        if len(self.trend_history) < self.TREND_MIN_HISTORY:
             return "stable"  # Пока недостаточно данных, заглушкой возвращается stable
 
         # Сравниваем первую и вторую половину окна
@@ -332,17 +350,14 @@ class EngagementCalculator:
 
         diff = second_half_mean - first_half_mean
 
-        # Порог для определения значимого изменения
-        threshold = 0.05
-
-        if diff > threshold:
+        if diff > self.TREND_THRESHOLD:
             return "rising"
-        elif diff < -threshold:
+        elif diff < -self.TREND_THRESHOLD:
             return "falling"
         else:
             return "stable"
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """
         Получение статистики за текущую сессию
 
@@ -350,7 +365,14 @@ class EngagementCalculator:
             Словарь со статистикой
         """
         if not self.engagement_history:
-            return {"mean": 0.0, "std": 0.0, "min": 0.0, "max": 0.0, "total_frames": self.total_frames_analyzed}
+            return {
+                "mean": 0.0,
+                "std": 0.0,
+                "min": 0.0,
+                "max": 0.0,
+                "total_frames": self.frame_count,
+                "current_window_size": 0,
+            }
 
         history_array = np.array(self.engagement_history)
 
@@ -359,6 +381,6 @@ class EngagementCalculator:
             "std": round(np.std(history_array), 3),
             "min": round(np.min(history_array), 3),
             "max": round(np.max(history_array), 3),
-            "total_frames": self.total_frames_analyzed,
+            "total_frames": self.frame_count,
             "current_window_size": len(self.engagement_history),
         }

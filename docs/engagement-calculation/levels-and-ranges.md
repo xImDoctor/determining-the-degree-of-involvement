@@ -4,9 +4,9 @@
 
 ## Классификация `level`
 
-Реализация: [`EngagementCalculator._classify_level`](../../backend/app/services/video_processing/engagement_calculator.py#L299-L316).
+Реализация: [`EngagementCalculator._classify_level`](../../backend/app/services/video_processing/engagement_calculator.py#L317-L334).
 
-`THRESHOLDS` ([engagement_calculator.py:76-81](../../backend/app/services/video_processing/engagement_calculator.py#L76-L81)):
+`THRESHOLDS` ([engagement_calculator.py:101-105](../../backend/app/services/video_processing/engagement_calculator.py#L101-L105)):
 
 | `level` | Порог `score` | Интерпретация |
 |---------|---------------|---------------|
@@ -86,10 +86,10 @@ DAiSEE (Gupta et al., arXiv:1609.01885) и EngageWild (Kaur et al., DICTA 2018, 
 
 Подробнее – в [literature.md](literature.md#пороги-классификации-вовлечённости-025-050-075).
 
-Параметры `THRESHOLDS` зашиты в класс:
+Параметры `THRESHOLDS` заданы как class-attribute:
 
 ```python
-# engagement_calculator.py:76-81
+# engagement_calculator.py:101-105
 THRESHOLDS = {"high": 0.75, "medium": 0.50, "low": 0.25}
 ```
 
@@ -99,7 +99,7 @@ THRESHOLDS = {"high": 0.75, "medium": 0.50, "low": 0.25}
 
 ## Статистика сессии
 
-Дополнительный метод [`get_statistics()`](../../backend/app/services/video_processing/engagement_calculator.py#L345-L364) возвращает aggregate по текущему окну `engagement_history`:
+Дополнительный метод [`get_statistics()`](../../backend/app/services/video_processing/engagement_calculator.py#L360-L379) возвращает aggregate по текущему окну `engagement_history`:
 
 ```python
 {
