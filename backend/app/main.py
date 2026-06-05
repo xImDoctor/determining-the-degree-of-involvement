@@ -51,7 +51,7 @@ app.add_middleware(
 )
 
 
-@stream_router.get("/health")
+@app.get("/health")
 async def health_check():
     """
     Проверка работоспособности сервиса.
