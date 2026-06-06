@@ -67,6 +67,7 @@ cd ../frontend && pip install -r requirements.txt
 
 ```bash
 redis-server --requirepass password
+# in .env set REDIS_HOST=localhost
 ```
 
 #### 3. Run Backend
