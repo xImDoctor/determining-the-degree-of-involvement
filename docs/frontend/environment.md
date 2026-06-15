@@ -19,7 +19,7 @@ load_dotenv()
 |------------|---------|----------|
 | `BACKEND_WS_URL` | `ws://localhost:8000` | WebSocket-адрес backend для `/ws/rooms/{room_id}/stream` |
 | `BACKEND_HTTP_URL` | `http://localhost:8000` | HTTP-адрес backend для `GET /health`, `GET /rooms` |
-| `EAR_THRESHOLD` | `0.25` | **Только** позиция горизонтальной красной линии на графике EAR в `engagement_app.py`. **Не** влияет на реальный порог детекции моргания в backend (его задаёт одноимённая переменная backend) |
+| `EAR_THRESHOLD` | `0.18` | **Только** позиция горизонтальной красной линии на графике EAR в `engagement_app.py`. **Не** влияет на реальный порог детекции моргания в backend (его задаёт одноимённая переменная backend) |
 
 ---
 
@@ -31,7 +31,7 @@ BACKEND_WS_URL=ws://localhost:8000
 BACKEND_HTTP_URL=http://localhost:8000
 
 # Только для отображения графика EAR
-EAR_THRESHOLD=0.25
+EAR_THRESHOLD=0.18
 ```
 
 ---

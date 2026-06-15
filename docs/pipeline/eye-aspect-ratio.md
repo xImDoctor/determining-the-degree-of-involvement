@@ -65,9 +65,9 @@ LEFT_EYE_LANDMARKS  = [362, 385, 387, 263, 373, 380]
 | Состояние | EAR |
 |-----------|-----|
 | Глаза широко открыты | 0.30–0.40 |
-| Нормальное раскрытие | 0.25–0.30 |
-| Прикрытые | 0.20–0.25 |
-| Почти закрытые | < 0.20 |
+| Нормальное раскрытие | 0.20–0.30 |
+| Прикрытые | 0.15–0.20 |
+| Почти закрытые | < 0.15 |
 
 
 ## Детекция моргания
@@ -99,9 +99,9 @@ LEFT_EYE_LANDMARKS  = [362, 385, 387, 263, 373, 380]
 ```python
 if avg_ear >= ear_alert_threshold (0.30):
     → Alert
-elif avg_ear >= ear_drowsy_threshold (0.20):
+elif avg_ear >= ear_drowsy_threshold (0.22):
     → Normal
-elif avg_ear >= ear_very_drowsy_threshold (0.15):
+elif avg_ear >= ear_very_drowsy_threshold (0.17):
     → Drowsy
 else:
     → Very Drowsy
@@ -115,21 +115,23 @@ else:
 | `attention_state` | EAR | Интерпретация |
 |-------------------|-----|---------------|
 | `Alert` | ≥ 0.30 | Широко открытые глаза - внимательность, сосредоточенность |
-| `Normal` | 0.20–0.30 | Пограничное раскрытие, сниженный тонус |
-| `Drowsy` | 0.15–0.20 | Начало усталости |
-| `Very Drowsy` | < 0.15 | Глаза почти закрыты |
+| `Normal` | 0.22–0.30 | Пограничное раскрытие, сниженный тонус |
+| `Drowsy` | 0.17–0.22 | Начало усталости |
+| `Very Drowsy` | < 0.17 | Глаза почти закрыты |
+
+> Используемые в системе значения отличаются от типовых `0.20-0.30`, `0.15-0.20`. Они модифицированы в результате апробации системы на группе из 21 обучающегося возрастом от 14 до 21 года включительно.
 
 
 ## Параметры
 
 | Параметр | Env-переменная | По умолчанию | Описание |
 |----------|----------------|--------------|----------|
-| `ear_threshold` | `EAR_THRESHOLD` | `0.25` | Порог закрытых глаз для `is_blinking` / `eyes_open` |
-| `consec_frames` | `EAR_CONSEC_FRAMES` | `3` | Кадров подряд с закрытыми глазами, чтобы засчитать моргание |
+| `ear_threshold` | `EAR_THRESHOLD` | `0.18` | Порог закрытых глаз для `is_blinking` / `eyes_open` |
+| `consec_frames` | `EAR_CONSEC_FRAMES` | `2` | Кадров подряд с закрытыми глазами, чтобы засчитать моргание |
 | `history_maxlen` | `EAR_HISTORY_MAXLEN` | `30` | Размер `deque` истории EAR (`~1 сек` при 30 FPS) |
 | `ear_alert_threshold` | `EAR_ALERT_THRESHOLD` | `0.30` | Порог `Alert` |
-| `ear_drowsy_threshold` | `EAR_DROWSY_THRESHOLD` | `0.20` | Граница `Normal` vs `Drowsy` |
-| `ear_very_drowsy_threshold` | `EAR_VERY_DROWSY_THRESHOLD` | `0.15` | Граница `Drowsy` vs `Very Drowsy` |
+| `ear_drowsy_threshold` | `EAR_DROWSY_THRESHOLD` | `0.22` | Граница `Normal` vs `Drowsy` |
+| `ear_very_drowsy_threshold` | `EAR_VERY_DROWSY_THRESHOLD` | `0.17` | Граница `Drowsy` vs `Very Drowsy` |
 
 
 ## Runtime-изменение и сброс

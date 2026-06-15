@@ -55,7 +55,7 @@ engagement     = clip(engagement_raw, 0, 1)
 >
 > - **`WEIGHTS`:** `emotion=0.42`, `eye=0.33`, `head_pose=0.25`
 > - **`EMOTION_WEIGHTS`** (релевантные): `Happiness=1.0`, `Anger=0.1`. **`confidence_threshold = 0.55`** → `confidence_penalty = 1.0` при `conf ≥ 0.55`
-> - **EAR thresholds** в [`analyze_ear.classify_attention_by_ear`](../../backend/app/services/video_processing/analyze_ear.py#L185): `alert=0.30`, `drowsy=0.20`, `very_drowsy=0.15`; на верхней ветке дополнительная развилка по `blink_count ∈ [10, 25]` (см. [../pipeline/eye-aspect-ratio.md](../pipeline/eye-aspect-ratio.md#классификация-attention_state))
+> - **EAR thresholds** в [`analyze_ear.classify_attention_by_ear`](../../backend/app/services/video_processing/analyze_ear.py#L185): `alert=0.30`, `drowsy=0.22`, `very_drowsy=0.17`; на верхней ветке дополнительная развилка по `blink_count ∈ [10, 25]` (см. [../pipeline/eye-aspect-ratio.md](../pipeline/eye-aspect-ratio.md#классификация-attention_state))
 > - **`EAR_STATE_SCORES`:** `Alert=1.0`, `Normal=0.7`, `Drowsy=0.4`, `Very Drowsy=0.1`
 > - **Blink rate modifier:** `1.10` для `10 ≤ rate ≤ 25`, `0.95` при `rate < 5`, `0.90` при `rate > 30`, иначе `1.00`. В текущей версии пайплайна `timestamp=datetime.now()` передаётся автоматически и modifier активен, но при автономном вызове без `timestamp` возникает `elapsed_time = None` и значение остаётся `1.00` (модификатор не применяется)
 > - **HPE thresholds** в [`analyze_head_pose.classify_attention_state`](../../backend/app/services/video_processing/analyze_head_pose.py#L160): `Highly Attentive` при `|pitch|<10°, |yaw|<15°`; `Distracted` при `|pitch|<30°, |yaw|<40°` (полная таблица - в [../pipeline/head-pose-estimation.md](../pipeline/head-pose-estimation.md#классификация-attention_state))

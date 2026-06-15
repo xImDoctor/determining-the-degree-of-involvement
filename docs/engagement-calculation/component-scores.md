@@ -74,9 +74,9 @@ eye_score = min(1.0, base_score * blink_modifier)
 | `attention_state` | Base score | Порог EAR |
 |-------------------|------------|-----------|
 | `Alert` | **1.0** | `avg_ear ≥ 0.30`|
-| `Normal` | **0.7** | `avg_ear ≥ 0.25`|
-| `Drowsy` | **0.4** | `avg_ear ≥ 0.20` |
-| `Very Drowsy` | **0.1** | `avg_ear < 0.20` |
+| `Normal` | **0.7** | `avg_ear ≥ 0.22`|
+| `Drowsy` | **0.4** | `avg_ear ≥ 0.17` |
+| `Very Drowsy` | **0.1** | `avg_ear < 0.17` |
 
 `attention_state` вычисляется **в `analyze_ear.py`** через [`classify_attention_by_ear`](../../backend/app/services/video_processing/analyze_ear.py#L185) – калькулятор его не пересчитывает, а только берёт готовую строку и ищет её в map.
 
