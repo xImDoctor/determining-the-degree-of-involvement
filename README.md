@@ -1,9 +1,9 @@
 # Real-time Engagement Detection System
 
-![Version](https://img.shields.io/badge/Version-1.0.0--beta-blue.svg)
+![Version](https://img.shields.io/badge/Version-1.0.0-blue.svg)
 [![License: XXX](https://img.shields.io/badge/License-XXX-green.svg)](LICENSE)
 [![Python 3.12+](https://img.shields.io/badge/Python-3.12+-blue.svg)](https://www.python.org/)
-[![CI/CD](https://github.com/FunnyValentain/determining-the-degree-of-involvement/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/FunnyValentain/determining-the-degree-of-involvement/actions/workflows/ci-cd.yml)
+[![CI/CD](https://github.com/xImDoctor/determining-the-degree-of-involvement/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/xImDoctor/determining-the-degree-of-involvement/actions/workflows/ci-cd.yml)
 
 ![Ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)
 ![Mypy](https://img.shields.io/badge/mypy-checked-blue)
@@ -31,7 +31,7 @@ Real-time facial emotion recognition system with attention tracking. Detects emo
 ## Quick Start
 
 ```bash
-git clone https://github.com/FunnyValentain/determining-the-degree-of-involvement.git
+git clone https://github.com/xImDoctor/determining-the-degree-of-involvement.git
 cd determining-the-degree-of-involvement
 cp .env.example .env  # Edit .env for configuration
 ```

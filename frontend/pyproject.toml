@@ -1,6 +1,6 @@
 [project]
 name = "engagement-detection-frontend"
-version = "1.0.0-beta"
+version = "1.0.0"
 description = "Streamlit frontend for real-time engagement detection"
 requires-python = ">=3.12"
 dependencies = [
