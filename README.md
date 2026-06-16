@@ -24,7 +24,7 @@
 ![Bash Script](https://img.shields.io/badge/bash_script-%23121011.svg?style=for-the-badge&logo=gnu-bash&logoColor=white)
 
 
-Real-time facial emotion recognition system with attention tracking. Detects emotions, blinks, and head pose to analyze user engagement through webcam.
+Real-time student engagement analysis for educational video. Facial emotions, eye aspect ratio and head pose fused into one interpretable score.
 
 ![Demo Streamlit frontend](docs/assets/demo-streamlit-frontend.gif)
 
